@@ -1,0 +1,30 @@
+{
+  "template": "https://github.com/statisticsnorway/ssb-pypitemplate.git",
+  "commit": "e81154758223bbeb62e2117de27029295c13e126",
+  "checkout": "2024.1.26",
+  "context": {
+    "cookiecutter": {
+      "project_name": "ssb-statstrukt",
+      "package_name": "ssb_statstrukt",
+      "friendly_name": "SSB Statstrukt",
+      "copyright_owner": "Statistics Norway",
+      "copyright_year": "2024",
+      "author": "Susie Jentoft",
+      "email": "coo@ssb.no",
+      "github_organization": "statisticsnorway",
+      "version": "0.0.0",
+      "license": "MIT",
+      "development_status": "Development Status :: 4 - Beta",
+      "code_quality_level": "Medium",
+      "_copy_without_render": [
+        "*.rst_t"
+      ],
+      "_jinja2_env_vars": {
+        "lstrip_blocks": true,
+        "trim_blocks": true
+      },
+      "_template": "https://github.com/statisticsnorway/ssb-pypitemplate.git"
+    }
+  },
+  "directory": null
+}
