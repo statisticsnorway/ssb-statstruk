@@ -6,6 +6,7 @@ class ssbmodel:
     """Class for model estimation"""
 
     def __init__(
+        """Initialize general ssbmodel object"""
         self, pop_data: pd.DataFrame, sample_data: pd.DataFrame, id_nr: str
     ) -> None:
         self.pop_data = pop_data
@@ -24,7 +25,8 @@ class ssbmodel:
         )
         self.id_nr = id_nr
 
-    def __call__(self):
+    def __call__(self) -> None:
+        """ Print model object """
         print(
             "strukturmodel instance with data including population size "
             + self.pop.shape[0]
@@ -47,6 +49,7 @@ class ssbmodel:
             dataset: dict, the dataset where keys are variable names and values are the data.
             data_name: str,
             check_for_id: bool, False by default. If True, checks for an ID variable that can be numeric or character.
+            remove_missing: bool, Whether to remove missing matches.
 
         Returns:
             None: The function will either pass silently or raise an error.

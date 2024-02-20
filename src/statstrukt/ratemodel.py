@@ -17,14 +17,16 @@
 import numpy as np
 import pandas as pd
 import statsmodels.formula.api as smf
+import statstrukt.ssbmodel as ssbmodel
 
 # -
 
 
 class ratemodel(ssbmodel):
-    """Class for estimating statistics for business surveys using a rate model"""
+    """Class for estimating statistics for business surveys using a rate model."""
 
     def __init__(
+        """Initialization of ratemodel object."""
         self, pop_data: pd.DataFrame, sample_data: pd.DataFrame, id_nr: str
     ) -> None:
         super().__init__(pop_data, sample_data, id_nr)
@@ -40,7 +42,7 @@ class ratemodel(ssbmodel):
         exclude_auto: int = 0,
         quiet: bool = True,
     ) -> None:
-        """Run and fit a rate model within strata
+        """Run and fit a rate model within strata.
 
         Args:
             y_var: The target variable to estimate from the survey.
@@ -87,13 +89,13 @@ class ratemodel(ssbmodel):
         )
         assert (
             all_values_present
-        ), "Not all strata in the population were found in the sample data. Please check"
+        ), "Not all strata in the population were found in the sample data. Please check."
         all_values_present = all(
             value in unique_strata_pop for value in unique_strata_sample
         )
         assert (
             all_values_present
-        ), "Not all strata in the sample were found in the population data. Please check"
+        ), "Not all strata in the sample were found in the population data. Please check."
 
         # Create new strata variable for modelling in case there are excluded variables
         self.pop_data["_strata_var_mod"] = self.pop_data[self.strata_var]
@@ -130,13 +132,12 @@ class ratemodel(ssbmodel):
             return np.diag(H)  # Return diagonal
 
         def _get_rstud(y, res, x_var, df, hh, X, formula):
-            """Get the studentized residuals from the model"""
+            """Get the studentized residuals from the model."""
             # set up vectors
             n = len(y)
             y = np.array(y)
             X = np.array(X)
             beta_ex_values = np.zeros(n)
-            sigma2_values = np.zeros(n)
             R = np.zeros(n)
 
             for i in range(n):
@@ -266,16 +267,16 @@ class ratemodel(ssbmodel):
 
     @property
     def get_coeffs(self) -> pd.DataFrame:
-        """Get the model coefficients for each strata"""
+        """Get the model coefficients for each strata."""
         return pd.DataFrame(self.strata_results).T
 
     @property
     def get_obs(self) -> pd.DataFrame:
-        """Get the details for observations from the model"""
+        """Get the details for observations from the model."""
         return self.obs_data
 
     def _get_robust(self, strata: str):
-        """Get robust variance estimations"""
+        """Get robust variance estimations."""
         # collect data for strata
         x_pop = self.strata_results[strata]["x_sum_pop"]
         x_utv = self.strata_results[strata]["x_sum_sample"]
@@ -347,7 +348,7 @@ class ratemodel(ssbmodel):
         return domain_df
 
     def _get_domain(self, domain: str) -> pd.DataFrame:
-        """Get mapping of domain to the strata results"""
+        """Get mapping of domain to the strata results."""
         strata_var = self.strata_var_mod
 
         # create key form population file
@@ -392,7 +393,6 @@ class ratemodel(ssbmodel):
 
         # Fetch results
         strata_df = pd.DataFrame(self.strata_results).T
-        obs_df = pd.DataFrame(self.obs_data).T
 
         # Add in domain
         if domain is None:
@@ -401,10 +401,10 @@ class ratemodel(ssbmodel):
             strata_df[domain] = self._get_domain(domain).str[0]
 
         # If domains are not aggregates of strata run alternative calculation for variance (not robust)
-        except:
+        except AssertionError:
             if var_type == "robust":
                 print(
-                    "Domain variable is not an aggregation of strata variables. Only standard variance calculations are available"
+                    "Domain variable is not an aggregation of strata variables. Only standard variance calculations are available."
                 )
             return self._get_domain_estimates(domain)
 
@@ -425,7 +425,7 @@ class ratemodel(ssbmodel):
         var1 = []
         var2 = []
         var3 = []
-        for i, s in enumerate(strata_df[self.strata_var_mod]):
+        for s in strata_df[self.strata_var_mod]:
             var = self._get_robust(s)
             var1.append(var[0])
             var2.append(var[1])
