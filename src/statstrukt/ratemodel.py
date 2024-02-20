@@ -26,9 +26,9 @@ class ratemodel(ssbmodel):
     """Class for estimating statistics for business surveys using a rate model."""
 
     def __init__(
-        """Initialization of ratemodel object."""
         self, pop_data: pd.DataFrame, sample_data: pd.DataFrame, id_nr: str
     ) -> None:
+        """Initialization of ratemodel object."""
         super().__init__(pop_data, sample_data, id_nr)
         self.pop_data = pop_data
         self.sample_data = sample_data
@@ -49,7 +49,7 @@ class ratemodel(ssbmodel):
             x_var: The variable to use as the explanatory variable in the model.
             strata_var: The stratification variable.
             exclude: List of ID numbers for observations to exclude.
-            exclude_auto: Whether extreme values should be automaticcally excluded from the models. Default 0. Integer 1 indicates extreme values should be reomved once and model run again.
+            exclude_auto: Whether extreme values should be automaticcally excluded from the models. Default 0. Integer 1 indicates extreme values should be removed once and model run again.
             quiet: Whether to print details on the running of the model.
 
         Returns:

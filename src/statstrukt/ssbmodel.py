@@ -6,9 +6,9 @@ class ssbmodel:
     """Class for model estimation"""
 
     def __init__(
-        """Initialize general ssbmodel object"""
         self, pop_data: pd.DataFrame, sample_data: pd.DataFrame, id_nr: str
     ) -> None:
+        """Initialize general ssbmodel object"""
         self.pop_data = pop_data
         self.sample_data = sample_data
 
