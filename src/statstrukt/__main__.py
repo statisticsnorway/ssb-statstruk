@@ -10,4 +10,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main(prog_name="ssb-statstrukt")  # pragma: no cover
+    main(prog_name="statstrukt")  # pragma: no cover
