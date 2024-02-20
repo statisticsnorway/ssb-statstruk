@@ -16,7 +16,7 @@
   "friendly_name": "SSB Statstrukt",
   "github_organization": "statisticsnorway",
   "license": "MIT",
-  "package_name": "ssb_statstrukt",
+  "package_name": "statstrukt",
   "project_name": "ssb-statstrukt",
   "version": "0.0.0"
 }

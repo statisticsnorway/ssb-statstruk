@@ -3,12 +3,12 @@ import pandas as pd
 
 
 class ssbmodel:
-    """Class for model estimation"""
+    """Class for model estimation."""
 
     def __init__(
         self, pop_data: pd.DataFrame, sample_data: pd.DataFrame, id_nr: str
     ) -> None:
-        """Initialize general ssbmodel object"""
+        """Initialize general ssbmodel object."""
         self.pop_data = pop_data
         self.sample_data = sample_data
 
@@ -26,7 +26,7 @@ class ssbmodel:
         self.id_nr = id_nr
 
     def __call__(self) -> None:
-        """ Print model object """
+        """Print model object."""
         print(
             "strukturmodel instance with data including population size "
             + self.pop.shape[0]
@@ -36,19 +36,19 @@ class ssbmodel:
 
     def _check_variable(
         self,
-        var_name,
-        dataset,
-        data_name="sample",
-        check_for_char=False,
-        remove_missing=False,
-    ):
-        """Check if the given variable name is in the dataset
+        var_name: str,
+        dataset: pd.DataFrame,
+        data_name: str = "sample",
+        check_for_char: bool = False,
+        remove_missing: bool = False,
+    ) -> None:
+        """Check if the given variable name is in the dataset.
 
         Args:
             var_name: str, the name of the variable to check.
             dataset: dict, the dataset where keys are variable names and values are the data.
             data_name: str,
-            check_for_id: bool, False by default. If True, checks for an ID variable that can be numeric or character.
+            check_for_char: bool, False by default. If True, checks for an ID variable that can be numeric or character.
             remove_missing: bool, Whether to remove missing matches.
 
         Returns:
@@ -92,7 +92,7 @@ class ssbmodel:
                     f"Variable '{var_name}' contains missing values. Please fix and try again."
                 )
 
-    def _add_flag(self):
+    def _add_flag(self) -> None:
         """Add flag in population data to say if unit is in the sample or not."""
         self.flag_var = "_flag_sample"
         sample_ids = set(self.sample_data[self.id_nr])
@@ -100,7 +100,7 @@ class ssbmodel:
             lambda x: 1 if x in sample_ids else 0
         )
 
-    def _check_model_run(self):
-        """Check to ensure that model has been run before proceeding with other functions"""
+    def _check_model_run(self) -> None:
+        """Check to ensure that model has been run before proceeding with other functions."""
         if not hasattr(self, "strata_results"):
             raise RuntimeError("Model has not been run. Please run fit() first")

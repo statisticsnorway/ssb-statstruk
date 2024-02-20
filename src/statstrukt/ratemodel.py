@@ -14,10 +14,12 @@
 #
 
 # +
+
 import numpy as np
 import pandas as pd
 import statsmodels.formula.api as smf
-import statstrukt.ssbmodel as ssbmodel
+
+from .ssbmodel import ssbmodel
 
 # -
 
@@ -30,15 +32,15 @@ class ratemodel(ssbmodel):
     ) -> None:
         """Initialization of ratemodel object."""
         super().__init__(pop_data, sample_data, id_nr)
-        self.pop_data = pop_data
-        self.sample_data = sample_data
+        # self.pop_data = pop_data
+        # self.sample_data = sample_data
 
     def fit(
         self,
         y_var: str,
         x_var: str,
-        strata_var: str = None,
-        exclude: list[str] = None,
+        strata_var: str | None = None,
+        exclude: list[str] | None = None,
         exclude_auto: int = 0,
         quiet: bool = True,
     ) -> None:
@@ -49,10 +51,9 @@ class ratemodel(ssbmodel):
             x_var: The variable to use as the explanatory variable in the model.
             strata_var: The stratification variable.
             exclude: List of ID numbers for observations to exclude.
-            exclude_auto: Whether extreme values should be automaticcally excluded from the models. Default 0. Integer 1 indicates extreme values should be removed once and model run again.
+            exclude_auto: Whether extreme values should be automatically excluded from the models. Default 0. Integer 1 indicates extreme values should be removed once and model run again.
             quiet: Whether to print details on the running of the model.
 
-        Returns:
         """
         # Check variables
         self._check_variable(x_var, self.pop_data, data_name="population")
@@ -69,7 +70,7 @@ class ratemodel(ssbmodel):
         self.x_var = x_var
 
         # Create stratum variables
-        if (type(strata_var) == list) & (len(strata_var) > 1):
+        if (isinstance(strata_var, list)) & (len(strata_var) > 1):
             self.sample_data["_stratum"] = self.sample_data[strata_var].apply(
                 lambda x: "_".join(x.astype(str)), axis=1
             )
@@ -103,7 +104,9 @@ class ratemodel(ssbmodel):
         self.strata_var_mod = "_strata_var_mod"
 
         # Add in change of strata for those excluded from model as: "surprise_strata"
-        def _update_strata(df, exclude):
+        def _update_strata(
+            df: pd.DataFrame, exclude: list[str] | None = None
+        ) -> None:
             """Update files to include a new variable for modelling including suprise strata."""
             # Use the 'loc' method to locate the rows where ID is in the exclude list and update 'strata'
             mask = df[self.id_nr].isin(exclude)
@@ -117,7 +120,7 @@ class ratemodel(ssbmodel):
             _update_strata(self.pop_data, exclude)
             _update_strata(self.sample_data, exclude)
 
-        def _get_hat(X, W):
+        def _get_hat(X: pd.Series, W: pd.Series) -> np.array:
             """Get the hat matrix for the model."""
             # Compute the square root of the weight matrix, W^(1/2)
             W = np.diag(W)  # Convert to n x n matrice
@@ -131,7 +134,15 @@ class ratemodel(ssbmodel):
 
             return np.diag(H)  # Return diagonal
 
-        def _get_rstud(y, res, x_var, df, hh, X, formula):
+        def _get_rstud(
+            y: str,
+            res: np.array,
+            x_var: str,
+            df: pd.DataFrame,
+            hh: np.array,
+            X: pd.Series,
+            formula: str,
+        ) -> list[float]:
             """Get the studentized residuals from the model."""
             # set up vectors
             n = len(y)
@@ -275,7 +286,7 @@ class ratemodel(ssbmodel):
         """Get the details for observations from the model."""
         return self.obs_data
 
-    def _get_robust(self, strata: str):
+    def _get_robust(self, strata: str) -> list[float]:
         """Get robust variance estimations."""
         # collect data for strata
         x_pop = self.strata_results[strata]["x_sum_pop"]
@@ -300,7 +311,7 @@ class ratemodel(ssbmodel):
         V3 = sum(ai**2 * di_3) + sum(di_3) * ai
         return (V1, V2, V3)
 
-    def _get_domain_estimates(self, domain: str):
+    def _get_domain_estimates(self, domain: str) -> pd.DataFrame:
         """Get domain estimation for case where domains are not an aggregation of strata."""
         # Collect data
         self._add_flag()  # add in check for if this is done?
@@ -376,7 +387,7 @@ class ratemodel(ssbmodel):
         return domain_mapped
 
     def get_estimates(
-        self, domain: str = None, var_type: str = "robust"
+        self, domain: str |None = None, var_type: str = "robust"
     ) -> pd.DataFrame:
         """Get estimates for previously run model within strata or domains. Variance and CV estimates are returned for each domain.
 
@@ -384,7 +395,7 @@ class ratemodel(ssbmodel):
             domain: Name of the variable to use for estimation. Should be in the population data.
             var_type: Choose from 'robust' or 'standard' estimation of variance. Currently only robust estimation is calculated for strata and aggregated strata domains estimation and standard for other domains.
 
-        Return:
+        Returns:
             A pd.Dataframe is returned conatining estimates and variance/coefficient of variation estimations for each domain.
 
         """
@@ -456,7 +467,7 @@ class ratemodel(ssbmodel):
         # drop extra variables
         result = result.drop(["var1", "var2", "var3"], axis=1)
 
-        return result
+        return(result)
 
     def get_extremes(self, rbound: float = 2, gbound: float = 2) -> pd.DataFrame:
         """Get observations with extreme values based on their rstudized residual value or G value.
@@ -465,7 +476,7 @@ class ratemodel(ssbmodel):
             rbound: Multiplicative value to determine the extremity of the studentized residual values.
             gbound: Multiplicative value to determine the extremity of the G values.
 
-        Return:
+        Returns:
             A pd.DataFrame containing units with extreme values beyond a set boundary.
         """
         self._check_model_run()
@@ -517,7 +528,8 @@ class ratemodel(ssbmodel):
         utvalg = self.sample_data
 
         # Map beta values to the population file
-        def _get_beta(stratum):
+        def _get_beta(stratum: str) -> pd.DataFrame:
+            """Get beta values from model for strataum."""
             return self.strata_results.get(stratum, {}).get("beta", None)
 
         pop["beta"] = pop[self.strata_var_mod].apply(_get_beta)
@@ -544,7 +556,8 @@ class ratemodel(ssbmodel):
         utvalg = self.sample_data
 
         # map population and sample x totals to survey data
-        def get_sums(stratum, var):
+        def get_sums(stratum: str, var: str):
+            """Get sums within strata."""
             return self.strata_results.get(stratum, {}).get(var, None)
 
         # Apply the function to create a new 'beta' column in the DataFrame. Use strata_var_mod to consider surprise strata

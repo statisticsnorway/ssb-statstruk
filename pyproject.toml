@@ -40,7 +40,7 @@ myst-parser = { version = ">=0.16.1" }
 pythonpath = ["src"]
 
 [tool.poetry.scripts]
-ssb-statstrukt = "ssb_statstrukt.__main__:main"
+ssb-statstrukt = "statstrukt.__main__:main"
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
@@ -48,7 +48,7 @@ tests = ["tests", "*/tests"]
 
 [tool.coverage.run]
 branch = true
-source = ["ssb_statstrukt", "tests"]
+source = ["statstrukt", "tests"]
 relative_files = true
 
 [tool.coverage.report]
