@@ -116,7 +116,7 @@ class ratemodel(ssbmodel):
             _update_strata(self.pop_data, exclude)
             _update_strata(self.sample_data, exclude)
 
-        def _get_hat(X: pd.Series, W: pd.Series) -> np.array:
+        def _get_hat(X: pd.Series, W: pd.Series) -> np.typing.ArrayLike:
             """Get the hat matrix for the model."""
             # Compute the square root of the weight matrix, W^(1/2)
             W = np.diag(W)  # Convert to n x n matrice
@@ -132,10 +132,10 @@ class ratemodel(ssbmodel):
 
         def _get_rstud(
             y: str,
-            res: np.array,
+            res: np.typing.ArrayLike,
             x_var: str,
             df: pd.DataFrame,
-            hh: np.array,
+            hh: np.typing.ArrayLike,
             X: pd.Series,
             formula: str,
         ) -> list[float]:

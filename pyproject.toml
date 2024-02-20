@@ -17,6 +17,9 @@ Changelog = "https://github.com/statisticsnorway/ssb-statstrukt/releases"
 [tool.poetry.dependencies]
 python = "^3.9"
 click = ">=8.0.1"
+numpy = "^1.26.4"
+pandas = "^2.2.0"
+statsmodels = "^0.14.1"
 
 [tool.poetry.group.dev.dependencies]
 pygments = ">=2.10.0"

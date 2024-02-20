@@ -29,7 +29,7 @@ class ssbmodel:
         """Print model object."""
         print(
             "strukturmodel instance with data including population size "
-            + self.pop.shape[0]
+            + self.pop_data.shape[0]
             + " and sample size "
             + self.sample_data.shape[0]
         )
