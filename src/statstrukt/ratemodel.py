@@ -104,9 +104,7 @@ class ratemodel(ssbmodel):
         self.strata_var_mod = "_strata_var_mod"
 
         # Add in change of strata for those excluded from model as: "surprise_strata"
-        def _update_strata(
-            df: pd.DataFrame, exclude: list[str] | None = None
-        ) -> None:
+        def _update_strata(df: pd.DataFrame, exclude: list[str] | None = None) -> None:
             """Update files to include a new variable for modelling including suprise strata."""
             # Use the 'loc' method to locate the rows where ID is in the exclude list and update 'strata'
             mask = df[self.id_nr].isin(exclude)
@@ -387,7 +385,7 @@ class ratemodel(ssbmodel):
         return domain_mapped
 
     def get_estimates(
-        self, domain: str |None = None, var_type: str = "robust"
+        self, domain: str | None = None, var_type: str = "robust"
     ) -> pd.DataFrame:
         """Get estimates for previously run model within strata or domains. Variance and CV estimates are returned for each domain.
 
@@ -467,7 +465,7 @@ class ratemodel(ssbmodel):
         # drop extra variables
         result = result.drop(["var1", "var2", "var3"], axis=1)
 
-        return(result)
+        return result
 
     def get_extremes(self, rbound: float = 2, gbound: float = 2) -> pd.DataFrame:
         """Get observations with extreme values based on their rstudized residual value or G value.
