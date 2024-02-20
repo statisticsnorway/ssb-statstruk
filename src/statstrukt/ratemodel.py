@@ -1,16 +1,14 @@
 # # Code for rate estimation
 # #### To do:
 #
-# - Add in standard variance (?)
+# - Add in standard variance
 # - Add in option for several y values.
 # - Add in for small strata with warning (<3)
-# - Document functions.
+# - Add in option to drop studentized res and G values
 # - Write theory documentation with formulas in a markdown doc.
 # - Write help file/instructs documentation
-# - Write tests
 # - Homogen model option
 # - Regression model option
-#
 #
 
 # +
@@ -563,5 +561,9 @@ class ratemodel(ssbmodel):
         pop_sum = utvalg[self.strata_var_mod].apply(get_sums, var="x_sum_pop")
 
         utvalg["estimation_weights"] = pop_sum / sample_sum
+
+        # Check for obs in suprise strata and set to 1
+        mask = utvalg._strata_var_mod.str.contains("surprise")
+        utvalg.loc[mask, "estimation_weights"] = 1
 
         return utvalg
