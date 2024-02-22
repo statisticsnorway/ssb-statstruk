@@ -1,4 +1,4 @@
-# mypy: ignore-errors
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -49,7 +49,14 @@ class ssbmodel:
         """Change the verbose print level."""
         self.verbose = verbose
 
-    def _check_variable(self, var_name, dataset, data_name="sample", check_for_char=False, remove_missing=True):  # type: ignore
+    def _check_variable(
+        self,
+        var_name: str,
+        dataset: pd.DataFrame,
+        data_name: str = "sample",
+        check_for_char: bool = False,
+        remove_missing: bool = True,
+    ) -> None:
         """Check if the given variable name is in the dataset.
 
         Args:
@@ -76,9 +83,9 @@ class ssbmodel:
             return  # Variable exists, no further checks needed
 
         # If not checking for an ID, verify that the variable is numeric
-        value = dataset[var_name]
+        value: pd.Series[Any] = dataset[var_name]
 
-        if not np.issubdtype(value.dtype, np.number):
+        if not np.issubdtype(value.dtype, np.number):  # type: ignore
             raise ValueError(
                 f"Variable '{var_name}' in the {data_name} dataset needs to be numeric but isn't."
             )
