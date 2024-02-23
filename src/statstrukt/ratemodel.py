@@ -330,8 +330,8 @@ class ratemodel(ssbmodel):
         hi = self.obs_data[strata]["hat"]
         ei = self.obs_data[strata]["resids"]
         print(f'ei type: {type(ei)}')
-        
-        if (isinstance(ei, (pd.Series, np.ndarray)) & (isinstance(hi, (pd.Series, np.ndarray))):
+
+        if (isinstance(ei, (pd.Series, np.ndarray))) & (isinstance(hi, (pd.Series, np.ndarray))):
             if len(ei) == 1:
                 return (0, 0, 0)
 
