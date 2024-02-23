@@ -32,10 +32,10 @@ class ssbmodel:
             data_name="population",
             check_for_char=True,
             remove_missing=False,
-        )  # type: ignore
+        )
         self._check_variable(
             id_nr, self.sample_data, check_for_char=True, remove_missing=False
-        )  # type: ignore
+        )
         self.id_nr = id_nr
         self.verbose = verbose
 
@@ -85,7 +85,7 @@ class ssbmodel:
         # If not checking for an ID, verify that the variable is numeric
         value: pd.Series[Any] = dataset[var_name]
 
-        if not np.issubdtype(value.dtype, np.number):  # type: ignore
+        if not np.issubdtype(value.dtype, np.number):
             raise ValueError(
                 f"Variable '{var_name}' in the {data_name} dataset needs to be numeric but isn't."
             )
