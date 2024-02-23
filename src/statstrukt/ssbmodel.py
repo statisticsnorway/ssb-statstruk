@@ -106,7 +106,7 @@ class ssbmodel:
                     f"Variable '{var_name}' contains missing values. Please fix and try again or set remove_missing = False."
                 )
 
-    def _add_flag(self):  # type: ignore
+    def _add_flag(self) -> None:
         """Add flag in population data to say if unit is in the sample or not."""
         self.flag_var = "_flag_sample"
         sample_ids = set(self.sample_data[self.id_nr])
@@ -114,7 +114,7 @@ class ssbmodel:
             lambda x: 1 if x in sample_ids else 0
         )
 
-    def _check_model_run(self):  # type: ignore
+    def _check_model_run(self) -> None:
         """Check to ensure that model has been run before proceeding with other functions."""
         if not hasattr(self, "strata_results"):
             raise RuntimeError("Model has not been run. Please run fit() first")
