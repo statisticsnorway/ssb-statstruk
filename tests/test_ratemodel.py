@@ -5,7 +5,7 @@
 # - Check for message for rstud in 2 obs strata
 
 # Import libraries
-from importlib.resources import path
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -14,8 +14,11 @@ import pytest
 from statstrukt import ratemodel
 
 # Read in test data
-s_data = pd.read_csv(path("statstrukt.data", "sample_data.csv"))
-p_data = pd.read_csv(path("statstrukt.data", "pop_data.csv"))
+sample_file = Path(__file__).parent / "data" / "sample_data.csv"
+pop_file = Path(__file__).parent / "data" / "pop_data.csv"
+
+s_data = pd.read_csv(sample_file)
+p_data = pd.read_csv(pop_file)
 
 # Add country variable
 s_data["country"] = 1
