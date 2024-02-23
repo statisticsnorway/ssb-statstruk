@@ -32,10 +32,10 @@ class ssbmodel:
             data_name="population",
             check_for_char=True,
             remove_missing=False,
-        )
+        )  # type: ignore
         self._check_variable(
             id_nr, self.sample_data, check_for_char=True, remove_missing=False
-        )
+        )  # type: ignore
         self.id_nr = id_nr
         self.verbose = verbose
 

@@ -12,7 +12,8 @@
 
 
 # Import libraries
-from typing import Union, Any
+from typing import Any
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -141,6 +142,7 @@ class ratemodel(ssbmodel):
             # Return diagonal
             return np.diag(H)
 
+        # type: ignore
         def _get_rstud(
             y: Any,
             res: Any,
@@ -243,14 +245,14 @@ class ratemodel(ssbmodel):
                             hh=hats,
                             X=np.array(group[x_var]),
                             formula=formula,
+                        )  # type: ignore
+                        obs_info.update(
+                            {
+                                "rstud": rstuds[0],
+                                "G": rstuds[0] * (np.sqrt(hats / (1.0 - hats))),
+                                "beta_ex": rstuds[1],
+                            }
                         )
-                    obs_info.update(
-                        {
-                            "rstud": rstuds[0],
-                            "G": rstuds[0] * (np.sqrt(hats / (1.0 - hats))),
-                            "beta_ex": rstuds[1],
-                        }
-                    )
 
             else:
                 if "surprise" not in stratum:  # type: ignore
@@ -259,11 +261,10 @@ class ratemodel(ssbmodel):
                     )
                 # Add standard info in for 1 obs strata : check for x-values = 0
                 x = group[x_var].values[0]
-                mask = x == 0
 
                 if x == 0:
                     print(
-                        #f"Stratum {stratum!r}, has 1 observation and has a x-value of 0. This is causing a problem withestimates."
+                        # f"Stratum {stratum!r}, has 1 observation and has a x-value of 0. This is causing a problem withestimates."
                         f"Stratum {stratum}, has 1 observation and has a x-value of 0. This is causing a problem withestimates."
                     )
                     x = 0.01  ## Not quite right but quick fix for errors. Need to fix properly
@@ -322,6 +323,7 @@ class ratemodel(ssbmodel):
         """Get the details for observations from the model."""
         return self.obs_data
 
+    # type: ignore
     def _get_robust(self, strata: str) -> tuple[float, float, float]:
         """Get robust variance estimations."""
         # collect data for strata
@@ -329,9 +331,11 @@ class ratemodel(ssbmodel):
         x_utv = self.strata_results[strata]["x_sum_sample"]
         hi = self.obs_data[strata]["hat"]
         ei = self.obs_data[strata]["resids"]
-        print(f'ei type: {type(ei)}')
+        print(f"ei type: {type(ei)}")
 
-        if (isinstance(ei, (pd.Series, np.ndarray))) & (isinstance(hi, (pd.Series, np.ndarray))):
+        if (isinstance(ei, (pd.Series, np.ndarray))) & (
+            isinstance(hi, (pd.Series, np.ndarray))
+        ):
             if len(ei) == 1:
                 return (0, 0, 0)
 
@@ -361,7 +365,7 @@ class ratemodel(ssbmodel):
     def _get_domain_estimates(self, domain: str) -> pd.DataFrame:
         """Get domain estimation for case where domains are not an aggregation of strata."""
         # Collect data
-        self._add_flag()
+        self._add_flag()  # type: ignore
         pop = self.get_imputed()  # add imputed y values
         res = self.strata_results  # get results for sigma2 values
         strata_var = self.strata_var  # use variable without surprise strata
@@ -405,7 +409,8 @@ class ratemodel(ssbmodel):
         domain_pd = pd.DataFrame(domain_df).T
         return domain_pd
 
-    def _get_domain(self, domain: str) -> pd.Series:
+    # type: ignore
+    def _get_domain(self, domain: str) -> pd.Series[Union[int, str]]:
         """Get mapping of domain to the strata results."""
         strata_var = self.strata_var_mod
 
@@ -447,7 +452,7 @@ class ratemodel(ssbmodel):
 
         """
         # Check model is run
-        self._check_model_run()
+        self._check_model_run()  # type: ignore
 
         # Fetch results
         strata_df = pd.DataFrame(self.strata_results).T
@@ -456,7 +461,7 @@ class ratemodel(ssbmodel):
         if domain is None:
             domain = self.strata_var
         try:
-            strata_df[domain] = self._get_domain(domain).str[0]
+            strata_df[domain] = self._get_domain(domain).str[0]  # type: ignore
 
         # If domains are not aggregates of strata run alternative calculation for variance (not robust)
         except AssertionError:
@@ -464,7 +469,7 @@ class ratemodel(ssbmodel):
                 print(
                     "Domain variable is not an aggregation of strata variables. Only standard variance calculations are available."
                 )
-            return self._get_domain_estimates(domain)
+            return self._get_domain_estimates(domain)  # type: ignore
 
         # Format variables
         strata_df["N"] = pd.to_numeric(strata_df["N"])
@@ -506,10 +511,15 @@ class ratemodel(ssbmodel):
             var2 = []
             var3 = []
             for s in strata_df[self.strata_var_mod]:
-                var = self._get_robust(s)
-                var1.append(var[0])
-                var2.append(var[1])
-                var3.append(var[2])
+                var = self._get_robust(s)  # type: ignore
+                if isinstance(var, tuple):
+                    var1.append(var[0])
+                    var2.append(var[1])
+                    var3.append(var[2])
+                else:
+                    var1.append(0)
+                    var2.append(0)
+                    var3.append(0)
 
             strata_df["var1"] = np.array(var1)
             strata_df["var2"] = np.array(var2)
@@ -550,7 +560,7 @@ class ratemodel(ssbmodel):
         Returns:
             A pd.DataFrame containing units with extreme values beyond a set boundary.
         """
-        self._check_extreme_run()
+        self._check_extreme_run()  # type: ignore
 
         extremes = pd.DataFrame()
         for k in self.get_obs.keys():
@@ -592,9 +602,9 @@ class ratemodel(ssbmodel):
         Returns:
             Pandas data frame with all in population and imputed values
         """
-        self._check_model_run()
+        self._check_model_run()  # type: ignore
 
-        self._add_flag()
+        self._add_flag()  # type: ignore
         pop = self.pop_data
         utvalg = self.sample_data
 
@@ -603,7 +613,7 @@ class ratemodel(ssbmodel):
             """Get beta values from model for strataum."""
             return self.strata_results.get(stratum, {}).get("beta", None)
 
-        pop["beta"] = pop[self.strata_var_mod].apply(_get_beta)
+        pop["beta"] = pop[self.strata_var_mod].apply(_get_beta)  # type: ignore
 
         # Calculate imputed values
         pop[f"{self.y_var}_imputed"] = pop["beta"] * pop[self.x_var]
@@ -622,7 +632,7 @@ class ratemodel(ssbmodel):
         Returns:
             Pandas data frame with sample data and weights.
         """
-        self._check_model_run()
+        self._check_model_run()  # type: ignore
 
         utvalg = self.sample_data
 
@@ -644,9 +654,9 @@ class ratemodel(ssbmodel):
 
         return utvalg
 
-    def _check_extreme_run(self) -> None:
+    def _check_extreme_run(self):
         """Check to ensure that extreme value requirements were run during fitting."""
-        self._check_model_run()
+        self._check_model_run()  # type: ignore
 
         is_rstud_present = "rstud" in next(iter(self.obs_data.values()))
 
