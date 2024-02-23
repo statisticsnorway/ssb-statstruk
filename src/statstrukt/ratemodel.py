@@ -185,17 +185,19 @@ class ratemodel(ssbmodel):
             return (R, beta_ex_values)
 
         # Set up coefficient dictionaries
-        strata_results = {}  # Each stratum as key
-        obs_data = {}  # Each stratum as key - consider changing to virk id?
+        strata_results: dict["str", Any] = {}  # Each stratum as key
+        obs_data: dict["str", Any] = (
+            {}
+        )  # Each stratum as key - consider changing to virk id?
 
         # Iterate over each stratum in sample and fit model
         for stratum, group in self.sample_data.groupby(self.strata_var_mod):
-            stratum_info = {
+            stratum_info: dict["str", Any] = {
                 self.strata_var_mod: stratum,
                 "n": len(group),  # Number of observations in the sample
                 "x_sum_sample": group[x_var].sum(),
             }
-            obs_info = {
+            obs_info: dict["str", Any] = {
                 self.strata_var_mod: stratum,
                 self.id_nr: group[self.id_nr].values,
                 "xvar": group[x_var],
@@ -264,8 +266,7 @@ class ratemodel(ssbmodel):
 
                 if x == 0:
                     print(
-                        # f"Stratum {stratum!r}, has 1 observation and has a x-value of 0. This is causing a problem withestimates."
-                        f"Stratum {stratum}, has 1 observation and has a x-value of 0. This is causing a problem withestimates."
+                        f"Stratum {stratum!r}, has 1 observation and has a x-value of 0. This is causing a problem withestimates."
                     )
                     x = 0.01  ## Not quite right but quick fix for errors. Need to fix properly
                 stratum_info.update(
@@ -294,7 +295,7 @@ class ratemodel(ssbmodel):
             extremes = self.get_extremes(rbound=rbound, gbound=gbound)[
                 self.id_nr
             ].values.tolist()
-            print(f"The following were extreme values and were excluded: {extremes}")
+            print(f"The following were extreme values and were excluded: {extremes!r}")
             if exclude is None:
                 exclude = extremes
             else:
@@ -331,7 +332,6 @@ class ratemodel(ssbmodel):
         x_utv = self.strata_results[strata]["x_sum_sample"]
         hi = self.obs_data[strata]["hat"]
         ei = self.obs_data[strata]["resids"]
-        print(f"ei type: {type(ei)}")
 
         if (isinstance(ei, (pd.Series, np.ndarray))) & (
             isinstance(hi, (pd.Series, np.ndarray))
@@ -353,6 +353,8 @@ class ratemodel(ssbmodel):
             V2 = sum(ai**2 * di_2) + sum(di_2) * ai
             V3 = sum(ai**2 * di_3) + sum(di_3) * ai
             return (V1, V2, V3)
+        else:
+            raise TypeError("Vectors ei or hi were not of the correct type")
 
     def _get_variance(self, strata: str) -> Any:
         """Get standard variance estimates."""
@@ -516,10 +518,6 @@ class ratemodel(ssbmodel):
                     var1.append(var[0])
                     var2.append(var[1])
                     var3.append(var[2])
-                else:
-                    var1.append(0)
-                    var2.append(0)
-                    var3.append(0)
 
             strata_df["var1"] = np.array(var1)
             strata_df["var2"] = np.array(var2)
@@ -654,7 +652,7 @@ class ratemodel(ssbmodel):
 
         return utvalg
 
-    def _check_extreme_run(self):
+    def _check_extreme_run(self) -> None:
         """Check to ensure that extreme value requirements were run during fitting."""
         self._check_model_run()  # type: ignore
 
