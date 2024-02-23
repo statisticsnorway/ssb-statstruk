@@ -412,7 +412,7 @@ class ratemodel(ssbmodel):
         return domain_pd
 
     # type: ignore
-    def _get_domain(self, domain: str) -> pd.Series[Union[int, str]]:
+    def _get_domain(self, domain: str) -> Any:
         """Get mapping of domain to the strata results."""
         strata_var = self.strata_var_mod
 
@@ -437,8 +437,8 @@ class ratemodel(ssbmodel):
         # map key
         strata_res = pd.DataFrame(self.strata_results).T
         domain_mapped = strata_res[self.strata_var_mod].map(domain_key)
-
-        return domain_mapped
+        print(f"domain mapped: {type(domain_mapped)}")
+        return domain_mapped.str[0]
 
     def get_estimates(
         self, domain: Union[str, None] = None, variance_type: str = "robust"
@@ -463,7 +463,7 @@ class ratemodel(ssbmodel):
         if domain is None:
             domain = self.strata_var
         try:
-            strata_df[domain] = self._get_domain(domain).str[0]  # type: ignore
+            strata_df[domain] = self._get_domain(domain)
 
         # If domains are not aggregates of strata run alternative calculation for variance (not robust)
         except AssertionError:
