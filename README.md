@@ -25,17 +25,11 @@
 [black]: https://github.com/psf/black
 [poetry]: https://python-poetry.org/
 
-## Features
-
-- TODO
-
-## Requirements
-
-- TODO
+![statstrukt logo](https://github.com/statisticsnorway/ssb-statstrukt/docs/images/statstrukt_2.png?raw=true)
 
 ## Installation
 
-You can install _SSB Statstrukt_ via [pip] from [PyPI]:
+You can install the _statstrukt_ via [pip] from [PyPI]:
 
 ```console
 pip install ssb-statstrukt
@@ -43,22 +37,23 @@ pip install ssb-statstrukt
 
 ## Usage
 
-Please see the [Reference Guide] for details.
+Please see the [Reference Guide](https://github.com/statisticsnorway/ssb-statstukrt/docs/reference.md) for details.
+Theory is described in the theory reference guides for [homogenous models](), [rate models](https://github.com/statisticsnorway/ssb-statstukrt/docs/theory_rate.md), and [regression models]()
 
 ## Contributing
 
 Contributions are very welcome.
-To learn more, see the [Contributor Guide].
+To learn more, see the [Contributor guide](https://github.com/statisticsnorway/ssb-statstrukt/blob/main/docs/contributing.md).
 
 ## License
 
-Distributed under the terms of the [MIT license][license],
+Distributed under the terms of the [MIT license](https://github.com/statisticsnorway/ssb-statstrukt/license),
 _SSB Statstrukt_ is free and open source software.
 
 ## Issues
 
 If you encounter any problems,
-please [file an issue] along with a detailed description.
+please [file an issue](https://github.com/statisticsnorway/ssb-statstrukt/issues) along with a detailed description.
 
 ## Credits
 
@@ -73,5 +68,5 @@ This project was generated from [Statistics Norway]'s [SSB PyPI Template].
 <!-- github-only -->
 
 [license]: https://github.com/statisticsnorway/ssb-statstrukt/blob/main/LICENSE
-[contributor guide]: https://github.com/statisticsnorway/ssb-statstrukt/blob/main/CONTRIBUTING.md
+[Contributor guide]: https://github.com/statisticsnorway/ssb-statstrukt/blob/main/docs/CONTRIBUTING.md
 [reference guide]: https://statisticsnorway.github.io/ssb-statstrukt/reference.html
