@@ -10,11 +10,9 @@
 
 # +
 
-# Ignore all type hint errors at the moment
-# mypy: ignore-errors
 
 # Import libraries
-from typing import Union
+from typing import Union, Any
 
 import numpy as np
 import pandas as pd
@@ -63,9 +61,9 @@ class ratemodel(ssbmodel):
 
         """
         # Check variables
-        self._check_variable(x_var, self.pop_data, data_name="population")  # type: ignore
-        self._check_variable(x_var, self.sample_data, remove_missing=remove_missing)  # type: ignore
-        self._check_variable(y_var, self.sample_data, remove_missing=remove_missing)  # type: ignore
+        self._check_variable(x_var, self.pop_data, data_name="population")
+        self._check_variable(x_var, self.sample_data, remove_missing=remove_missing)
+        self._check_variable(y_var, self.sample_data, remove_missing=remove_missing)
 
         # Define the model formula. For example, let's say you're modeling 'Number of Job Vacancies' as a function of 'Turnover'
         formula = y_var + "~" + x_var + "- 1"
@@ -86,10 +84,10 @@ class ratemodel(ssbmodel):
             )
             self.strata_var = "_stratum"
         else:
-            self.strata_var = strata_var
+            self.strata_var = strata_var  # type: ignore
         self._check_variable(
             self.strata_var, self.pop_data, data_name="population", check_for_char=True
-        )  # type: ignore
+        )
 
         # Check all strata in sample are in population
         unique_strata_pop = self.pop_data[self.strata_var].unique()
@@ -114,7 +112,7 @@ class ratemodel(ssbmodel):
         self.strata_var_mod = "_strata_var_mod"
 
         # Add in change of strata for those excluded from model as: "surprise_strata"
-        def _update_strata(df, exclude):  # type: ignore
+        def _update_strata(df: pd.DataFrame, exclude: list[Union[str, int]]) -> None:
             """Update files to include a new variable for modelling including suprise strata."""
             # Use the 'loc' method to locate the rows where ID is in the exclude list and update 'strata'
             mask = df[self.id_nr].isin(exclude)
@@ -125,13 +123,13 @@ class ratemodel(ssbmodel):
             )
 
         if exclude is not None:
-            _update_strata(self.pop_data, exclude)  # type: ignore
-            _update_strata(self.sample_data, exclude)  # type: ignore
+            _update_strata(self.pop_data, exclude)
+            _update_strata(self.sample_data, exclude)
 
-        def _get_hat(X, W):  # type: ignore
+        def _get_hat(X: Any, W: Any) -> Any:
             """Get the hat matrix for the model."""
             # Compute the square root of the weight matrix, W^(1/2)
-            W = np.diag(W)  # Convert to n x n matrice
+            W = np.diag(W)
             W_sqrt = np.sqrt(W)
 
             # Compute (X^T * W * X)^(-1)
@@ -140,20 +138,20 @@ class ratemodel(ssbmodel):
             # Compute the hat matrix
             H = W_sqrt @ X @ XTWX_inv @ X.T @ W_sqrt
 
-            return np.diag(H)  # Return diagonal
+            # Return diagonal
+            return np.diag(H)
 
         def _get_rstud(
-            y,
-            res,
-            x_var,
-            df,
-            hh,
-            X,
-            formula,
-        ):  # type: ignore
+            y: Any,
+            res: Any,
+            x_var: str,
+            df: pd.DataFrame,
+            hh: Any,
+            X: Any,
+            formula: str,
+        ) -> tuple[Any, Any]:
             """Get the studentized residuals from the model."""
             # set up vectors
-            # print(f"X type {type(X)}")
             n = len(y)
             y = np.array(y)
             X = np.array(X)
@@ -203,7 +201,7 @@ class ratemodel(ssbmodel):
             }
             if len(group) > 1:  # Ensure there is more than one row to fit a model
                 if self.verbose == 2:
-                    print(f"\nFitting model for Stratum: {stratum}")
+                    print(f"\nFitting model for Stratum: {stratum!r}")
 
                 # Adjusting weights for zero values in x variable
                 weights = 1.0 / (group[x_var])
@@ -224,14 +222,14 @@ class ratemodel(ssbmodel):
                 )
 
                 # Add in residuals and hat values to observation info
-                hats = _get_hat(group[[x_var]].values, weights)  # type: ignore
+                hats = _get_hat(group[[x_var]].values, weights)
                 obs_info.update({"resids": model.resid.values, "hat": hats})
 
                 # Add in studentized residuals and G values if specified
                 if control_extremes:
                     if len(group) == 2:
                         print(
-                            f"Extreme values not able to be detected in stratum: {stratum} due to too few observations."
+                            f"Extreme values not able to be detected in stratum: {stratum!r} due to too few observations."
                         )
                         obs_info.update(
                             {"rstud": np.nan, "G": np.nan, "beta_ex": np.nan}
@@ -245,7 +243,7 @@ class ratemodel(ssbmodel):
                             hh=hats,
                             X=np.array(group[x_var]),
                             formula=formula,
-                        )  # type: ignore
+                        )
                     obs_info.update(
                         {
                             "rstud": rstuds[0],
@@ -255,14 +253,23 @@ class ratemodel(ssbmodel):
                     )
 
             else:
-                if "surprise" not in stratum:
+                if "surprise" not in stratum:  # type: ignore
                     print(
-                        f"\nStratum: {stratum}, has only one observation and has 0 variance. Consider combing strata."
+                        f"Stratum: {stratum!r}, has only one observation and has 0 variance. Consider combing strata."
                     )
-                # Add standard info in for 1 obs strata
+                # Add standard info in for 1 obs strata : check for x-values = 0
+                x = group[x_var].values[0]
+                mask = x == 0
+
+                if x == 0:
+                    print(
+                        #f"Stratum {stratum!r}, has 1 observation and has a x-value of 0. This is causing a problem withestimates."
+                        f"Stratum {stratum}, has 1 observation and has a x-value of 0. This is causing a problem withestimates."
+                    )
+                    x = 0.01  ## Not quite right but quick fix for errors. Need to fix properly
                 stratum_info.update(
                     {
-                        "beta": (group[y_var].values / group[x_var].values)[0],
+                        "beta": group[y_var].values[0] / x,
                         "sigma2": 0,
                     }
                 )
@@ -287,7 +294,6 @@ class ratemodel(ssbmodel):
                 self.id_nr
             ].values.tolist()
             print(f"The following were extreme values and were excluded: {extremes}")
-            print(f"extreme type: {type(extremes)}")
             if exclude is None:
                 exclude = extremes
             else:
@@ -312,36 +318,39 @@ class ratemodel(ssbmodel):
         return pd.DataFrame(self.strata_results).T
 
     @property
-    def get_obs(self) -> dict:
+    def get_obs(self) -> dict[str, Any]:
         """Get the details for observations from the model."""
         return self.obs_data
 
-    def _get_robust(self, strata):  #  # type: ignore
+    def _get_robust(self, strata: str) -> tuple[float, float, float]:
         """Get robust variance estimations."""
         # collect data for strata
         x_pop = self.strata_results[strata]["x_sum_pop"]
         x_utv = self.strata_results[strata]["x_sum_sample"]
         hi = self.obs_data[strata]["hat"]
         ei = self.obs_data[strata]["resids"]
-        if len(ei) == 1:
-            return (0, 0, 0)
+        print(f'ei type: {type(ei)}')
+        
+        if (isinstance(ei, (pd.Series, np.ndarray)) & (isinstance(hi, (pd.Series, np.ndarray))):
+            if len(ei) == 1:
+                return (0, 0, 0)
 
-        # Calculate ai
-        Xr = x_pop - x_utv
-        ai = Xr / x_utv
+            # Calculate ai
+            Xr = x_pop - x_utv
+            ai = Xr / x_utv
 
-        # Calculate di variations
-        di_1 = ei**2
-        di_2 = ei**2 / (1.0 - hi)
-        di_3 = ei**2 / ((1.0 - hi) ** 2)
+            # Calculate di variations
+            di_1 = ei**2
+            di_2 = ei**2 / (1.0 - hi)
+            di_3 = ei**2 / ((1.0 - hi) ** 2)
 
-        # Caluclate variances
-        V1 = sum(ai**2 * di_1) + sum(di_1) * ai
-        V2 = sum(ai**2 * di_2) + sum(di_2) * ai
-        V3 = sum(ai**2 * di_3) + sum(di_3) * ai
-        return (V1, V2, V3)
+            # Caluclate variances
+            V1 = sum(ai**2 * di_1) + sum(di_1) * ai
+            V2 = sum(ai**2 * di_2) + sum(di_2) * ai
+            V3 = sum(ai**2 * di_3) + sum(di_3) * ai
+            return (V1, V2, V3)
 
-    def _get_variance(self, strata):  # type: ignore
+    def _get_variance(self, strata: str) -> Any:
         """Get standard variance estimates."""
         x_pop = self.strata_results[strata]["x_sum_pop"]
         x_utv = self.strata_results[strata]["x_sum_sample"]
@@ -349,10 +358,10 @@ class ratemodel(ssbmodel):
         V = x_pop**2 * (x_pop - x_utv) / x_pop * s2 / x_utv
         return V
 
-    def _get_domain_estimates(self, domain):  # type: ignore
+    def _get_domain_estimates(self, domain: str) -> pd.DataFrame:
         """Get domain estimation for case where domains are not an aggregation of strata."""
         # Collect data
-        self._add_flag()  # type: ignore
+        self._add_flag()
         pop = self.get_imputed()  # add imputed y values
         res = self.strata_results  # get results for sigma2 values
         strata_var = self.strata_var  # use variable without surprise strata
@@ -369,7 +378,7 @@ class ratemodel(ssbmodel):
             # Get additional domain information on sample, pop sizes and estimates
             N = temp_dom.shape[0]
             n = np.sum(temp_dom[self.flag_var] == 1)
-            est = np.sum(temp_dom[f"{self.y_var}_imputed"])  # for 1-y varible only
+            est = np.sum(temp_dom[f"{self.y_var}_imputed"])
 
             # Loop through strata to get the partial variances
             var = 0
@@ -393,10 +402,10 @@ class ratemodel(ssbmodel):
             }
 
         # Format and return
-        domain_df = pd.DataFrame(domain_df).T
-        return domain_df
+        domain_pd = pd.DataFrame(domain_df).T
+        return domain_pd
 
-    def _get_domain(self, domain):  # type: ignore
+    def _get_domain(self, domain: str) -> pd.Series:
         """Get mapping of domain to the strata results."""
         strata_var = self.strata_var_mod
 
@@ -438,7 +447,7 @@ class ratemodel(ssbmodel):
 
         """
         # Check model is run
-        self._check_model_run()  # type: ignore
+        self._check_model_run()
 
         # Fetch results
         strata_df = pd.DataFrame(self.strata_results).T
@@ -447,7 +456,7 @@ class ratemodel(ssbmodel):
         if domain is None:
             domain = self.strata_var
         try:
-            strata_df[domain] = self._get_domain(domain).str[0]  # type: ignore
+            strata_df[domain] = self._get_domain(domain).str[0]
 
         # If domains are not aggregates of strata run alternative calculation for variance (not robust)
         except AssertionError:
@@ -455,7 +464,7 @@ class ratemodel(ssbmodel):
                 print(
                     "Domain variable is not an aggregation of strata variables. Only standard variance calculations are available."
                 )
-            return self._get_domain_estimates(domain)  # type: ignore
+            return self._get_domain_estimates(domain)
 
         # Format variables
         strata_df["N"] = pd.to_numeric(strata_df["N"])
@@ -497,7 +506,7 @@ class ratemodel(ssbmodel):
             var2 = []
             var3 = []
             for s in strata_df[self.strata_var_mod]:
-                var = self._get_robust(s)  # type: ignore
+                var = self._get_robust(s)
                 var1.append(var[0])
                 var2.append(var[1])
                 var3.append(var[2])
@@ -541,7 +550,7 @@ class ratemodel(ssbmodel):
         Returns:
             A pd.DataFrame containing units with extreme values beyond a set boundary.
         """
-        self._check_extreme_run()  # type: ignore
+        self._check_extreme_run()
 
         extremes = pd.DataFrame()
         for k in self.get_obs.keys():
@@ -575,7 +584,6 @@ class ratemodel(ssbmodel):
                 "rstud",
             ]
         ]
-        print(f" extremes type: {type(extremes)}")
         return extremes
 
     def get_imputed(self) -> pd.DataFrame:
@@ -584,14 +592,14 @@ class ratemodel(ssbmodel):
         Returns:
             Pandas data frame with all in population and imputed values
         """
-        self._check_model_run()  # type: ignore
+        self._check_model_run()
 
-        self._add_flag()  # type: ignore
+        self._add_flag()
         pop = self.pop_data
         utvalg = self.sample_data
 
         # Map beta values to the population file
-        def _get_beta(stratum):  # type: ignore
+        def _get_beta(stratum: str) -> pd.DataFrame:
             """Get beta values from model for strataum."""
             return self.strata_results.get(stratum, {}).get("beta", None)
 
@@ -605,21 +613,21 @@ class ratemodel(ssbmodel):
         pop[f"{self.y_var}_imputed"] = (
             pop[self.id_nr].map(id_to_yvar_map).fillna(pop[f"{self.y_var}_imputed"])
         )
+        pop_pd = pd.DataFrame(pop)
+        return pop_pd
 
-        return pop
-
-    def get_weights(self):  # type: ignore
+    def get_weights(self) -> pd.DataFrame:
         """Get sample data with weights based on model.
 
         Returns:
             Pandas data frame with sample data and weights.
         """
-        self._check_model_run()  # type: ignore
+        self._check_model_run()
 
         utvalg = self.sample_data
 
         # map population and sample x totals to survey data
-        def _get_sums(stratum, var):  # type: ignore
+        def _get_sums(stratum: str, var: str) -> pd.DataFrame:
             """Get sums within strata."""
             sum_value = self.strata_results.get(stratum, {}).get(var, None)
             return sum_value
@@ -636,7 +644,7 @@ class ratemodel(ssbmodel):
 
         return utvalg
 
-    def _check_extreme_run(self):  # type: ignore
+    def _check_extreme_run(self) -> None:
         """Check to ensure that extreme value requirements were run during fitting."""
         self._check_model_run()
 
