@@ -76,9 +76,12 @@ include = ["*.py", "*.pyi", "**/pyproject.toml", "*.ipynb"]
 extend-exclude = [
     "__pycache__",
     "old",
-    ".ipynb_checkpoints",
+    "*/.ipynb_checkpoints/*",
     "noxfile.py",
     "docs/conf.py",
+    "src/run.py",
+    "tests/test_main.py",
+    "tests/test_ratemodel.py",
 ]
 
 # Ruff rules may be customized as desired: https://docs.astral.sh/ruff/rules/

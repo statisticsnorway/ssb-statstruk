@@ -25,7 +25,7 @@
 [black]: https://github.com/psf/black
 [poetry]: https://python-poetry.org/
 
-![statstrukt logo](https://github.com/statisticsnorway/ssb-statstrukt/docs/images/statstrukt_2.png?raw=true)
+![statstrukt logo](https://github.com/statisticsnorway/ssb-statstrukt/docs/images/statstrukt_2.png)
 
 ## Installation
 
@@ -37,8 +37,7 @@ pip install ssb-statstrukt
 
 ## Usage
 
-Please see the [Reference Guide](https://github.com/statisticsnorway/ssb-statstukrt/docs/reference.md) for details.
-Theory is described in the theory reference guides for [homogenous models](), [rate models](https://github.com/statisticsnorway/ssb-statstukrt/docs/theory_rate.md), and [regression models]()
+For examples on running a rate model see the [Quick guide to running a rate model with **_statstrukt_**](https://github.com/statisticsnorway/ssb-statstukrt/docs/guide_rate.md). Further function references are given in the [Reference Guide](https://github.com/statisticsnorway/ssb-statstukrt/docs/reference.md). Theory used in the caluclations is described in the theory references for homogenous models, [rate models](https://github.com/statisticsnorway/ssb-statstukrt/docs/theory_rate.md), and regression models.
 
 ## Contributing
 
@@ -53,7 +52,7 @@ _SSB Statstrukt_ is free and open source software.
 ## Issues
 
 If you encounter any problems,
-please [file an issue](https://github.com/statisticsnorway/ssb-statstrukt/issues) along with a detailed description.
+please [file an issue] along with a detailed description.
 
 ## Credits
 
