@@ -66,6 +66,19 @@ class ratemodel(ssbmodel):
         self._check_variable(x_var, self.sample_data, remove_missing=remove_missing)
         self._check_variable(y_var, self.sample_data, remove_missing=remove_missing)
 
+        # Check control and exclude_auto
+        if (not control_extremes) & (exclude_auto > 0):
+            print(
+                "You have chosen to automatically remove outliers so extreme values must be controlled. Parameter control_extremes set to True."
+            )
+            control_extremes = True
+
+        if (self.verbose == 2) & (exclude_auto > 0):
+            print(f"Fitting rate model number: {exclude_auto}")
+
+        if (self.verbose == 2) & (exclude_auto == 0):
+            print("Fitting final rate model")
+
         # Define the model formula. For example, let's say you're modeling 'Number of Job Vacancies' as a function of 'Turnover'
         formula = y_var + "~" + x_var + "- 1"
         self.y_var = y_var
@@ -184,9 +197,9 @@ class ratemodel(ssbmodel):
 
         # Set up coefficient dictionaries
         strata_results: dict["str", Any] = {}  # Each stratum as key
-        obs_data: dict[
-            "str", Any
-        ] = {}  # Each stratum as key - consider changing to virk id?
+        obs_data: dict["str", Any] = (
+            {}
+        )  # Each stratum as key - consider changing to virk id?
 
         # Iterate over each stratum in sample and fit model
         for stratum, group in self.sample_data.groupby(self.strata_var_mod):
