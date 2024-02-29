@@ -39,7 +39,7 @@ class ratemodel(ssbmodel):
         self,
         y_var: str,
         x_var: str,
-        strata_var: Union[str, list[str], None] = None,
+        strata_var: Union[str, list[str]] = "",
         control_extremes: bool = True,
         exclude: Union[list[Union[str, int]], None] = None,
         exclude_auto: int = 0,
@@ -85,7 +85,7 @@ class ratemodel(ssbmodel):
         self.x_var = x_var
 
         # Create stratum variables
-        if strata_var is None:
+        if not strata_var:
             self.sample_data["_stratum"] = "1"
             self.pop_data["_stratum"] = "1"
             self.strata_var = "_stratum"
@@ -97,7 +97,7 @@ class ratemodel(ssbmodel):
                 lambda x: "_".join(x.astype(str)), axis=1
             )
             self.strata_var = "_stratum"
-        elif isinstance(strata_var, str):
+        else:
             self.strata_var = strata_var
         self._check_variable(
             self.strata_var, self.pop_data, data_name="population", check_for_char=True
@@ -120,7 +120,7 @@ class ratemodel(ssbmodel):
             all_values_present
         ), "Not all strata in the sample were found in the population data. Please check."
 
-        # Create new strata variable for modelling in case there are excluded variables
+        # Create new strata variable for modelling in case there are excluded observations
         self.pop_data["_strata_var_mod"] = self.pop_data[self.strata_var]
         self.sample_data["_strata_var_mod"] = self.sample_data[self.strata_var]
         self.strata_var_mod = "_strata_var_mod"
@@ -448,7 +448,7 @@ class ratemodel(ssbmodel):
         return domain_mapped.str[0]
 
     def get_estimates(
-        self, domain: Union[str, None] = None, variance_type: str = "robust"
+        self, domain: str = "", variance_type: str = "robust"
     ) -> pd.DataFrame:
         """Get estimates for previously run model within strata or domains. Variance and CV estimates are returned for each domain.
 
@@ -467,7 +467,7 @@ class ratemodel(ssbmodel):
         strata_df = pd.DataFrame(self.strata_results).T
 
         # Add in domain
-        if domain is None:
+        if not domain:
             domain = self.strata_var
         try:
             strata_df[domain] = self._get_domain(domain)
