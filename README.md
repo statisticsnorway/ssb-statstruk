@@ -25,7 +25,7 @@
 [black]: https://github.com/psf/black
 [poetry]: https://python-poetry.org/
 
-![statstrukt logo](https://github.com/statisticsnorway/ssb-statstrukt/docs/images/statstrukt_2.png)
+![statstrukt logo](https://github.com/statisticsnorway/ssb-statstrukt/blob/main/docs/images/statstrukt_2.png)
 
 ## Installation
 
@@ -37,7 +37,7 @@ pip install ssb-statstrukt
 
 ## Usage
 
-For examples on running a rate model see the [Quick guide to running a rate model with **_statstrukt_**](https://github.com/statisticsnorway/ssb-statstukrt/docs/guide_rate.md). Further function references are given in the [Reference Guide](https://github.com/statisticsnorway/ssb-statstukrt/docs/reference.md). Theory used in the caluclations is described in the theory references for homogenous models, [rate models](https://github.com/statisticsnorway/ssb-statstukrt/docs/theory_rate.md), and regression models.
+For examples on running a rate model see the [Quick guide to running a rate model with **_statstrukt_**](https://github.com/statisticsnorway/ssb-statstrukt/blob/main/docs/guide_rate.md). Further function references are given in the [Reference Guide](https://github.com/statisticsnorway/ssb-statstukrt/docs/reference.md). Theory used in the caluclations is described in the theory references for homogenous models, [rate models](https://github.com/statisticsnorway/ssb-statstrukt/blob/main/docs/theory_rate.md), and regression models.
 
 ## Contributing
 
@@ -46,7 +46,7 @@ To learn more, see the [Contributor guide](https://github.com/statisticsnorway/s
 
 ## License
 
-Distributed under the terms of the [MIT license](https://github.com/statisticsnorway/ssb-statstrukt/license),
+Distributed under the terms of the [MIT license](https://github.com/statisticsnorway/ssb-statstrukt/blob/main/license),
 _SSB Statstrukt_ is free and open source software.
 
 ## Issues
