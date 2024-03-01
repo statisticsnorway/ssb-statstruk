@@ -1,5 +1,3 @@
-from typing import Any
-
 import numpy as np
 import pandas as pd
 
@@ -83,9 +81,10 @@ class ssbmodel:
             return  # Variable exists, no further checks needed
 
         # If not checking for an ID, verify that the variable is numeric
-        value: pd.Series[Any] = dataset[var_name]
+        # value: pd.Series[Any] = dataset[var_name]
+        value = dataset[var_name]
 
-        if not np.issubdtype(value.dtype, np.number):
+        if not np.issubdtype(value.dtype, np.number):  # type: ignore
             raise ValueError(
                 f"Variable '{var_name}' in the {data_name} dataset needs to be numeric but isn't."
             )

@@ -88,24 +88,29 @@ class ratemodel(ssbmodel):
         if not strata_var:
             self.sample_data["_stratum"] = "1"
             self.pop_data["_stratum"] = "1"
+            strata_var_new: str = "_stratum"
             self.strata_var = "_stratum"
-        elif (isinstance(strata_var, list)) & (len(strata_var) > 1):
-            self.sample_data["_stratum"] = self.sample_data[strata_var].apply(
-                lambda x: "_".join(x.astype(str)), axis=1
-            )
-            self.pop_data["_stratum"] = self.pop_data[strata_var].apply(
-                lambda x: "_".join(x.astype(str)), axis=1
-            )
-            self.strata_var = "_stratum"
+        elif isinstance(strata_var, list):
+            if len(strata_var) == 1:
+                strata_var_new = strata_var[0]
+            else:
+                self.sample_data["_stratum"] = self.sample_data[strata_var].apply(
+                    lambda x: "_".join(x.astype(str)), axis=1
+                )
+                self.pop_data["_stratum"] = self.pop_data[strata_var].apply(
+                    lambda x: "_".join(x.astype(str)), axis=1
+                )
+                strata_var_new = "_stratum"
         else:
-            self.strata_var = strata_var
+            strata_var_new = strata_var
         self._check_variable(
-            self.strata_var, self.pop_data, data_name="population", check_for_char=True
+            strata_var_new, self.pop_data, data_name="population", check_for_char=True
         )
+        self.strata_var = strata_var_new
 
         # Check all strata in sample are in population
-        unique_strata_pop = self.pop_data[self.strata_var].unique()
-        unique_strata_sample = self.sample_data[self.strata_var].unique()
+        unique_strata_pop = self.pop_data[strata_var_new].unique()
+        unique_strata_sample = self.sample_data[strata_var_new].unique()
 
         all_values_present = all(
             value in unique_strata_sample for value in unique_strata_pop
@@ -121,9 +126,8 @@ class ratemodel(ssbmodel):
         ), "Not all strata in the sample were found in the population data. Please check."
 
         # Create new strata variable for modelling in case there are excluded observations
-        self.pop_data["_strata_var_mod"] = self.pop_data[self.strata_var]
-        self.sample_data["_strata_var_mod"] = self.sample_data[self.strata_var]
-        self.strata_var_mod = "_strata_var_mod"
+        self.pop_data["_strata_var_mod"] = self.pop_data[strata_var_new]
+        self.sample_data["_strata_var_mod"] = self.sample_data[strata_var_new]
 
         # Add in change of strata for those excluded from model as: "surprise_strata"
         def _update_strata(df: pd.DataFrame, exclude: list[Union[str, int]]) -> None:
@@ -202,14 +206,14 @@ class ratemodel(ssbmodel):
         )  # Each stratum as key - consider changing to virk id?
 
         # Iterate over each stratum in sample and fit model
-        for stratum, group in self.sample_data.groupby(self.strata_var_mod):
+        for stratum, group in self.sample_data.groupby("_strata_var_mod"):
             stratum_info: dict["str", Any] = {
-                self.strata_var_mod: stratum,
+                "_strata_var_mod": stratum,
                 "n": len(group),  # Number of observations in the sample
                 "x_sum_sample": group[x_var].sum(),
             }
             obs_info: dict["str", Any] = {
-                self.strata_var_mod: stratum,
+                "_strata_var_mod": stratum,
                 self.id_nr: group[self.id_nr].values,
                 "xvar": group[x_var],
                 "yvar": group[y_var],
@@ -268,7 +272,7 @@ class ratemodel(ssbmodel):
                         )
 
             else:
-                if "surprise" not in stratum:
+                if "surprise" not in stratum:  # type: ignore
                     print(
                         f"Stratum: {stratum!r}, has only one observation and has 0 variance. Consider combing strata."
                     )
@@ -289,13 +293,13 @@ class ratemodel(ssbmodel):
                 obs_info.update({"resids": [0], "hat": np.nan})
                 if control_extremes:
                     obs_info.update({"rstud": np.nan, "G": np.nan, "beta_ex": np.nan})
-            strata_results[stratum] = stratum_info
-            obs_data[stratum] = obs_info
+            strata_results[stratum] = stratum_info  # type: ignore
+            obs_data[stratum] = obs_info  # type: ignore
 
         # Loop through population also
-        for stratum, group in self.pop_data.groupby(self.strata_var_mod):
+        for stratum, group in self.pop_data.groupby("_strata_var_mod"):
             stratum_info = {"N": len(group), "x_sum_pop": group[x_var].sum()}
-            strata_results[stratum].update(stratum_info)
+            strata_results[stratum].update(stratum_info)  # type: ignore
 
         # Set results to instance
         self.strata_results = strata_results
@@ -421,7 +425,7 @@ class ratemodel(ssbmodel):
 
     def _get_domain(self, domain: str) -> Any:
         """Get mapping of domain to the strata results."""
-        strata_var = self.strata_var_mod
+        strata_var = "_strata_var_mod"
 
         # create key form population file
         pop = self.pop_data[[strata_var, domain]]
@@ -443,7 +447,7 @@ class ratemodel(ssbmodel):
 
         # map key
         strata_res = pd.DataFrame(self.strata_results).T
-        domain_mapped = strata_res[self.strata_var_mod].map(domain_key)
+        domain_mapped = strata_res["_strata_var_mod"].map(domain_key)
         # print(f"domain mapped: {type(domain_mapped)}")
         return domain_mapped.str[0]
 
@@ -496,7 +500,7 @@ class ratemodel(ssbmodel):
         # Add variance
         if variance_type == "standard":
             var1 = []
-            for s in strata_df[self.strata_var_mod]:
+            for s in strata_df["_strata_var_mod"]:
                 var1.append(self._get_variance(s))
             strata_df["var1"] = np.array(var1)
 
@@ -519,7 +523,7 @@ class ratemodel(ssbmodel):
             var1 = []
             var2 = []
             var3 = []
-            for s in strata_df[self.strata_var_mod]:
+            for s in strata_df["_strata_var_mod"]:
                 var = self._get_robust(s)
                 if isinstance(var, tuple):
                     var1.append(var[0])
@@ -571,7 +575,7 @@ class ratemodel(ssbmodel):
         for k in self.get_obs.keys():
             new = pd.DataFrame.from_dict(self.get_obs[k])
             new["beta"] = self.strata_results[k]["beta"]
-            new[self.strata_var_mod] = self.strata_results[k][self.strata_var_mod]
+            new["_strata_var_mod"] = self.strata_results[k]["_strata_var_mod"]
             new["n"] = self.strata_results[k]["n"]
             new["N"] = self.strata_results[k]["N"]
             new[self.x_var] = new["xvar"]
@@ -587,7 +591,7 @@ class ratemodel(ssbmodel):
         extremes = extremes[
             [
                 self.id_nr,
-                self.strata_var_mod,
+                "_strata_var_mod",
                 "n",
                 "N",
                 self.x_var,
@@ -614,11 +618,11 @@ class ratemodel(ssbmodel):
         utvalg = self.sample_data
 
         # Map beta values to the population file
-        def _get_beta(stratum: str) -> pd.DataFrame:
-            """Get beta values from model for strataum."""
+        def _get_beta(stratum: str) -> Any:
+            """Get beta values from model for stratum."""
             return self.strata_results.get(stratum, {}).get("beta", None)
 
-        pop["beta"] = pop[self.strata_var_mod].apply(_get_beta)
+        pop["beta"] = pop["_strata_var_mod"].apply(_get_beta)
 
         # Calculate imputed values
         pop[f"{self.y_var}_imputed"] = pop["beta"] * pop[self.x_var]
@@ -642,14 +646,14 @@ class ratemodel(ssbmodel):
         utvalg = self.sample_data
 
         # map population and sample x totals to survey data
-        def _get_sums(stratum: str, var: str) -> pd.DataFrame:
+        def _get_sums(stratum: str, var: str) -> Any:
             """Get sums within strata."""
             sum_value = self.strata_results.get(stratum, {}).get(var, None)
             return sum_value
 
         # Apply the function to create a new 'beta' column in the DataFrame. Use strata_var_mod to consider surprise strata
-        sample_sum = utvalg[self.strata_var_mod].apply(_get_sums, var="x_sum_sample")
-        pop_sum = utvalg[self.strata_var_mod].apply(_get_sums, var="x_sum_pop")
+        sample_sum = utvalg["_strata_var_mod"].apply(_get_sums, var="x_sum_sample")
+        pop_sum = utvalg["_strata_var_mod"].apply(_get_sums, var="x_sum_pop")
 
         utvalg["estimation_weights"] = pop_sum / sample_sum
 
