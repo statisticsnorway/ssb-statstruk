@@ -1,18 +1,18 @@
 [tool.poetry]
-name = "ssb-statstrukt"
+name = "ssb-statstruk"
 version = "0.0.0"
-description = "SSB Statstrukt"
+description = "SSB Statstruk"
 authors = ["Susie Jentoft <coo@ssb.no>"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/statisticsnorway/ssb-statstrukt"
-repository = "https://github.com/statisticsnorway/ssb-statstrukt"
-documentation = "https://statisticsnorway.github.io/ssb-statstrukt"
-packages = [{ include = "statstrukt", from = "src" }]
+homepage = "https://github.com/statisticsnorway/ssb-statstruk"
+repository = "https://github.com/statisticsnorway/ssb-statstruk"
+documentation = "https://statisticsnorway.github.io/ssb-statstruk"
+packages = [{ include = "statstruk", from = "src" }]
 classifiers = ["Development Status :: 4 - Beta"]
 
 [tool.poetry.urls]
-Changelog = "https://github.com/statisticsnorway/ssb-statstrukt/releases"
+Changelog = "https://github.com/statisticsnorway/ssb-statstruk/releases"
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -45,7 +45,7 @@ myst-parser = { version = ">=0.16.1" }
 pythonpath = ["src"]
 
 [tool.poetry.scripts]
-ssb-statstrukt = "statstrukt.__main__:main"
+ssb-statstruk = "statstruk.__main__:main"
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
@@ -53,7 +53,7 @@ tests = ["tests", "*/tests"]
 
 [tool.coverage.run]
 branch = true
-source = ["statstrukt", "tests"]
+source = ["statstruk", "tests"]
 relative_files = true
 
 [tool.coverage.report]

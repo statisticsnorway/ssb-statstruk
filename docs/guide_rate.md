@@ -1,17 +1,17 @@
-# Quick guide to running a rate model with **_statstrukt_**
+# Quick guide to running a rate model with **_statstruk_**
 
-The python package **_statstrukt_** is designed to make running estimation models for business surveys easier with options for standard and robust variance estimation as well as outlier detection. This quick guide is written (mostly) for those at Statistics Norway and uses an example data set, hosted on their internal Dapla platform. This is a practical guide with examples; see [Theory for rate model estimations](https://github.com/statisticsnorway/ssb-statstukrt/docs/theory_rate.md) for the formulas used in the functions.
+The python package **_statstruk_** is designed to make running estimation models for business surveys easier with options for standard and robust variance estimation as well as outlier detection. This quick guide is written (mostly) for those at Statistics Norway and uses an example data set, hosted on their internal Dapla platform. This is a practical guide with examples; see [Theory for rate model estimations](https://github.com/statisticsnorway/ssb-statstukrt/docs/theory_rate.md) for the formulas used in the functions.
 
 ## Installation
 The package is on PyPI can be installed in a poetry environment by running the following in a terminal:
 ```bash
-poetry install ssb-statstrukt
+poetry install ssb-statstruk
 ```
 
 ## Import module
 The module can then be imported into a python session/notebook. The main class used is called `ratemodel` and can be imported with:
 ```python
-import ratemodel from statstrukt
+import ratemodel from statstruk
 ```
 
 ## Data requirements
@@ -33,7 +33,7 @@ An example of population and sample data can be read in using the following code
 import dapla as dp
 
 bucket = "gs://ssb-prod-dapla-felles-data-delt"
-folder = "felles/veiledning/python/eksempler/statstrukt"
+folder = "felles/veiledning/python/eksempler/statstruk"
 
 pop_df = dp.read_pandas(f"{bucket}/{folder}/pop.parquet")
 sample_df = dp.read_pandas(f"{bucket}/{folder}/sample.parquet")

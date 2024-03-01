@@ -1,1 +1,1 @@
-"""Test suite for the ssb_statstrukt package."""
+"""Test suite for the ssb_statstruk package."""

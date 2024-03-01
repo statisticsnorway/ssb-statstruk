@@ -6,8 +6,8 @@ import click
 @click.command()
 @click.version_option()
 def main() -> None:
-    """SSB Statstrukt."""
+    """SSB Statstruk."""
 
 
 if __name__ == "__main__":
-    main(prog_name="statstrukt")  # pragma: no cover
+    main(prog_name="statstruk")  # pragma: no cover
