@@ -37,7 +37,7 @@ pip install ssb-statstrukt
 
 ## Usage
 
-For examples on running a rate model see the [Quick guide to running a rate model with **_statstrukt_**](https://github.com/statisticsnorway/ssb-statstrukt/blob/main/docs/guide_rate.md). Further function references are given in the [Reference Guide](https://github.com/statisticsnorway/ssb-statstukrt/docs/reference.md). Theory used in the caluclations is described in the theory references for homogenous models, [rate models](https://github.com/statisticsnorway/ssb-statstrukt/blob/main/docs/theory_rate.md), and regression models.
+For examples on running a rate model see the [Quick guide to running a rate model with **_statstrukt_**](https://github.com/statisticsnorway/ssb-statstrukt/blob/main/docs/guide_rate.md). Further function references are given in the [reference Guide](https://github.com/statisticsnorway/ssb-statstukrt/blob/main/docs/reference.md). Theory used in the caluclations is described in the theory references for homogenous models, [rate models](https://github.com/statisticsnorway/ssb-statstrukt/blob/main/docs/theory_rate.md), and regression models.
 
 ## Contributing
 
