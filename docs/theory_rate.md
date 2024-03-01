@@ -14,7 +14,7 @@ $$
 y_{hi} = \beta_h x_{hi} + \epsilon_{hi}
 $$
 
-where $y_{hi}$ is the variable of interest for unit $i$ in stratum $h$, $\beta_h$ is the rate for the stratum, $x_{hi}$ is the explanatory variable, and $epsilom_{hi}$ is the residual.
+where $y_{hi}$ is the variable of interest for unit $i$ in stratum $h$, $\beta_h$ is the rate for the stratum, $x_{hi}$ is the explanatory variable, and $\epsilon_{hi}$ is the residual.
 
 The variance structure of the residuals for a rate model is
 
