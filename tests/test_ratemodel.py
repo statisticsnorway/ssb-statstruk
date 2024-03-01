@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from statstrukt import ratemodel
+from statstruk import ratemodel
 
 # Read in test data
 sample_file = Path(__file__).parent / "data" / "sample_data.csv"
@@ -25,19 +25,19 @@ s_data["country"] = 1
 p_data["country"] = 1
 
 
-def test_statstrukt_ratemodel() -> None:
+def test_statstruk_ratemodel() -> None:
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(x_var="employees", y_var="job_vacancies", strata_var="industry")
     assert isinstance(mod1.get_coeffs, pd.DataFrame)
 
 
-def test_statstrukt_ratemodel_nostrata() -> None:
+def test_statstruk_ratemodel_nostrata() -> None:
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(x_var="employees", y_var="job_vacancies", control_extremes=False)
     assert mod1.get_coeffs.shape[0] == 1
 
 
-def test_statstrukt_ratemodel_liststrata() -> None:
+def test_statstruk_ratemodel_liststrata() -> None:
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(
         x_var="employees",
@@ -48,7 +48,7 @@ def test_statstrukt_ratemodel_liststrata() -> None:
     assert mod1.get_coeffs.shape[0] == 15
 
 
-def test_statstrukt_ratemodel_excludes() -> None:
+def test_statstruk_ratemodel_excludes() -> None:
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(
         x_var="employees", y_var="job_vacancies", strata_var="industry", exclude=[5, 9]
@@ -58,7 +58,7 @@ def test_statstrukt_ratemodel_excludes() -> None:
     assert mod1.get_weights().estimation_weights[0] == 1
 
 
-def test_statstrukt_ratemodel_get_estimates() -> None:
+def test_statstruk_ratemodel_get_estimates() -> None:
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     with pytest.raises(RuntimeError):
         mod1.get_estimates()
@@ -84,7 +84,7 @@ def test_statstrukt_ratemodel_get_estimates() -> None:
     )  # check this with struktur
 
 
-def test_statstrukt_ratemodel_get_extremes() -> None:
+def test_statstruk_ratemodel_get_extremes() -> None:
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     with pytest.raises(RuntimeError):
         mod1.get_extremes()
@@ -108,7 +108,7 @@ def test_statstrukt_ratemodel_get_extremes() -> None:
         mod2.get_extremes()
 
 
-def test_statstrukt_ratemodel_auto_extremes() -> None:
+def test_statstruk_ratemodel_auto_extremes() -> None:
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(
         x_var="employees",
@@ -122,14 +122,14 @@ def test_statstrukt_ratemodel_auto_extremes() -> None:
     assert ex_df.shape[0] == 0
 
 
-def test_statstrukt_ratemodel_standard() -> None:
+def test_statstruk_ratemodel_standard() -> None:
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(x_var="employees", y_var="job_vacancies", strata_var="industry")
     out = mod1.get_estimates(variance_type="standard")
     assert np.round(out["job_vacancies_CV"].iloc[0], 4) == 3.9762
 
 
-def test_statstrukt_ratemodel_nocontrol() -> None:
+def test_statstruk_ratemodel_nocontrol() -> None:
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(
         x_var="employees",

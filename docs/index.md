@@ -1,4 +1,4 @@
-# SSBs statstrukt package
+# SSBs statstruk package
 
 ```{toctree}
 ---
@@ -11,7 +11,7 @@ Reference <reference>
 contributing
 Code of Conduct <codeofconduct>
 license
-Changelog <https://github.com/statisticsnorway/ssb-statstrukt/releases>
+Changelog <https://github.com/statisticsnorway/ssb-statstruk/releases>
 ```
 
 ```{include} ./../README.md

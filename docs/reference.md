@@ -7,27 +7,27 @@ from the root directory.
 
 You need to rerun the command when python files are added, deleted or renamed.
 Copy the content from the generated
-ssb_statstrukt.rst file to the {eval-rst} block below and
+ssb_statstruk.rst file to the {eval-rst} block below and
 delete the .rst file afterwards.
 -->
 
 ```{eval-rst}
-statstrukt package
+statstruk package
 ==================
 
 
-statstrukt.ratemodel module
+statstruk.ratemodel module
 ---------------------------
 
-.. automodule:: statstrukt.ratemodel
+.. automodule:: statstruk.ratemodel
    :members:
    :undoc-members:
    :show-inheritance:
 
-statstrukt.ssbmodel module
+statstruk.ssbmodel module
 --------------------------
 
-.. automodule:: statstrukt.ssbmodel
+.. automodule:: statstruk.ssbmodel
    :members:
    :undoc-members:
    :show-inheritance:

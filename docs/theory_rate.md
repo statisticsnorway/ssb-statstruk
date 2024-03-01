@@ -1,7 +1,7 @@
-# Theory for rate model estimations in **_statstrukt_**
+# Theory for rate model estimations in **_statstruk_**
 
 ## Introduction
-The **_statstrukt_** package is based on standard statistical theory and that described in the Norwegian document: [Bruk av applikasjonen Struktur](https://www.ssb.no/a/publikasjoner/pdf/notat_200730/notat_200730.pdf). A summary of the theory used in programming **_statstrukt_** is described here.
+The **_statstruk_** package is based on standard statistical theory and that described in the Norwegian document: [Bruk av applikasjonen Struktur](https://www.ssb.no/a/publikasjoner/pdf/notat_200730/notat_200730.pdf). A summary of the theory used in programming **_statstruk_** is described here.
 
 The package can be used to calculate model-based estimates for totals ($T$) of a target variable collected from sampled units ($s$) in a population ($U$). Standard and robust estimates for the uncertainty (variance) of the estimates are also calculated in the package. The methods provided are common for business surveys at Statistics Norway.
 
@@ -66,7 +66,7 @@ CV(\hat{T_h}-T_h) = \frac{SE(\hat{T_h}-T_h)}{\hat{T_h}}
 $$
 
 ### Robust variance estimation
-The [Struktur application](https://www.ssb.no/a/publikasjoner/pdf/notat_200730/notat_200730.pdf) programmed in SAS also includes  robust variance estimation. Three of these are programmed in the **_statstrukt_** package. These are summarized in this section.
+The [Struktur application](https://www.ssb.no/a/publikasjoner/pdf/notat_200730/notat_200730.pdf) programmed in SAS also includes  robust variance estimation. Three of these are programmed in the **_statstruk_** package. These are summarized in this section.
 
 We define the robust variance estimate for a rate model in two parts:
 
@@ -135,7 +135,7 @@ $$
 $$
 
 ## Outlier detection
-Estimation based on models can be strongly influenced by outliers that have a strong influnce on the model estimates. The **_statstrukt_** package provides two outlier detection metrics: studentized residual values and the difference of fits values (DFFITS or $G$).
+Estimation based on models can be strongly influenced by outliers that have a strong influnce on the model estimates. The **_statstruk_** package provides two outlier detection metrics: studentized residual values and the difference of fits values (DFFITS or $G$).
 
 ### Studentized residuals
 The studentized residuals ($t_{hi|i}$) are calculated using an estimate for $\sigma_h$ based on a fitted model without observation, $i$, and is sometimes referred to as the external studentized residuals. The studentized residuals are calculated as
@@ -151,7 +151,7 @@ $$
 $$
 
 where $\hat{\beta}_{h|i}$ refers to the model estimate for the rate excluding observation $i$.
-Absolute values of the studentized residual values above a criteria are then classified as outliers. A general threshold criteria used in **_statstrukt_** is  2 but can be adjusted.
+Absolute values of the studentized residual values above a criteria are then classified as outliers. A general threshold criteria used in **_statstruk_** is  2 but can be adjusted.
 
 ### DFFITS
 The difference of fits ($G$) can be calculated from the studentized residuals and hat values as

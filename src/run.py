@@ -16,7 +16,7 @@ import dapla as dp
 
 # -
 
-from statstrukt import ratemodel
+from statstruk import ratemodel
 
 # +
 pop_df = pd.read_csv("../tests/data/pop_data.csv")
@@ -29,7 +29,7 @@ sample_df["country"] = 1
 
 # Alternative read from felles on Dapla
 bucket = "gs://ssb-prod-dapla-felles-data-delt"
-folder = "felles/veiledning/python/eksempler/statstrukt"
+folder = "felles/veiledning/python/eksempler/statstruk"
 
 # +
 # dp.write_pandas(df = pop_df,
