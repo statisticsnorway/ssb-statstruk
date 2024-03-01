@@ -12,15 +12,24 @@ delete the .rst file afterwards.
 -->
 
 ```{eval-rst}
-ssb\_statstrukt package
-=============================================================================
+statstrukt package
+==================
 
 
-ssb\_statstrukt.functions module
------------------------------------------------------------------------------
+statstrukt.ratemodel module
+---------------------------
 
-.. automodule:: ssb_statstrukt.functions
+.. automodule:: statstrukt.ratemodel
    :members:
    :undoc-members:
    :show-inheritance:
+
+statstrukt.ssbmodel module
+--------------------------
+
+.. automodule:: statstrukt.ssbmodel
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ```

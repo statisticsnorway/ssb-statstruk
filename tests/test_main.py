@@ -3,7 +3,7 @@
 import pytest
 from click.testing import CliRunner
 
-from ssb_statstrukt import __main__
+from statstrukt import __main__
 
 
 @pytest.fixture()

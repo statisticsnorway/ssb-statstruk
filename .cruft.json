@@ -5,7 +5,7 @@
   "context": {
     "cookiecutter": {
       "project_name": "ssb-statstrukt",
-      "package_name": "ssb_statstrukt",
+      "package_name": "statstrukt",
       "friendly_name": "SSB Statstrukt",
       "copyright_owner": "Statistics Norway",
       "copyright_year": "2024",

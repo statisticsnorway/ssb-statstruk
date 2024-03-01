@@ -1,22 +1,22 @@
-```{include} ../README.md
----
-end-before: <!-- github-only -->
----
-```
-
-[license]: license
-[contributor guide]: contributing
-[command-line reference]: reference
+# SSBs statstrukt package
 
 ```{toctree}
 ---
 hidden:
 maxdepth: 1
 ---
-
-reference
+Guide to running rate models <./guide_rate.md>
+Theory on rate models <./theory_rate.md>
+Reference <reference>
 contributing
 Code of Conduct <codeofconduct>
-License <license>
+license
 Changelog <https://github.com/statisticsnorway/ssb-statstrukt/releases>
+```
+
+```{include} ./../README.md
+---
+start-after: <!-- badges-begin -->
+end-before: <!-- badges-end -->
+---
 ```

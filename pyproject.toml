@@ -8,6 +8,7 @@ readme = "README.md"
 homepage = "https://github.com/statisticsnorway/ssb-statstrukt"
 repository = "https://github.com/statisticsnorway/ssb-statstrukt"
 documentation = "https://statisticsnorway.github.io/ssb-statstrukt"
+packages = [{ include = "statstrukt", from = "src" }]
 classifiers = ["Development Status :: 4 - Beta"]
 
 [tool.poetry.urls]
@@ -16,6 +17,10 @@ Changelog = "https://github.com/statisticsnorway/ssb-statstrukt/releases"
 [tool.poetry.dependencies]
 python = "^3.9"
 click = ">=8.0.1"
+numpy = "^1.26.4"
+pandas = "^2.2.0"
+statsmodels = "^0.14.1"
+pandas-stubs = "^2.2.0.240218"
 
 [tool.poetry.group.dev.dependencies]
 pygments = ">=2.10.0"
@@ -40,7 +45,7 @@ myst-parser = { version = ">=0.16.1" }
 pythonpath = ["src"]
 
 [tool.poetry.scripts]
-ssb-statstrukt = "ssb_statstrukt.__main__:main"
+ssb-statstrukt = "statstrukt.__main__:main"
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
@@ -48,7 +53,7 @@ tests = ["tests", "*/tests"]
 
 [tool.coverage.run]
 branch = true
-source = ["ssb_statstrukt", "tests"]
+source = ["statstrukt", "tests"]
 relative_files = true
 
 [tool.coverage.report]
@@ -71,9 +76,12 @@ include = ["*.py", "*.pyi", "**/pyproject.toml", "*.ipynb"]
 extend-exclude = [
     "__pycache__",
     "old",
-    ".ipynb_checkpoints",
+    "*/.ipynb_checkpoints/*",
     "noxfile.py",
     "docs/conf.py",
+    "src/run.py",
+    "tests/test_main.py",
+    "tests/test_ratemodel.py",
 ]
 
 # Ruff rules may be customized as desired: https://docs.astral.sh/ruff/rules/
