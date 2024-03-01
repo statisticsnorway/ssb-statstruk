@@ -25,7 +25,7 @@
 [black]: https://github.com/psf/black
 [poetry]: https://python-poetry.org/
 
-![statstrukt logo](https://github.com/statisticsnorway/ssb-statstrukt/blob/main/docs/images/statstrukt_2.png)
+![statstrukt logo](https://github.com/statisticsnorway/ssb-statstrukt/blob/main/docs/images/statstrukt.png)
 
 ## Installation
 
