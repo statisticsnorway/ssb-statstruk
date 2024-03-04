@@ -37,7 +37,7 @@ pip install ssb-statstruk
 
 ## Usage
 
-For examples on running a rate model see the [Quick guide to running a rate model with **_statstruk_**](https://github.com/statisticsnorway/ssb-statstruk/blob/main/docs/guide_rate.md). Further function references are given in the [reference Guide](https://github.com/statisticsnorway/ssb-statstruk/blob/main/docs/reference.md). Theory used in the caluclations is described in the theory references for homogenous models, [rate models](https://github.com/statisticsnorway/ssb-statstruk/blob/main/docs/theory_rate.md), and regression models.
+For examples on running a rate model see the [Quick guide to running a rate model with **_statstruk_**](https://statisticsnorway.github.io/ssb-statstruk/guide_rate.html). Further function references are given in the [Reference guide]. Theory used in the caluclations is described in the theory references for Homogenous models, [Rate models], and Regression models.
 
 ## Contributing
 
@@ -63,6 +63,8 @@ This project was generated from [Statistics Norway]'s [SSB PyPI Template].
 [ssb pypi template]: https://github.com/statisticsnorway/ssb-pypitemplate
 [file an issue]: https://github.com/statisticsnorway/ssb-statstruk/issues
 [pip]: https://pip.pypa.io/
+[Reference guide]: https://statisticsnorway.github.io/ssb-statstruk/reference.html
+[rate models]: https://statisticsnorway.github.io/ssb-statstruk/theory_rate.html
 
 <!-- github-only -->
 
