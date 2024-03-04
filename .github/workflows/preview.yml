@@ -1,0 +1,44 @@
+name: Preview
+
+on:
+  push:
+    branches:
+      - preview
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  preview-deployment:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    
+    # Add steps for building your site, similar to your main deployment workflow
+    - name: Check out the repository
+      uses: actions/checkout@v4
+
+    - name: Install Poetry
+      run: |
+        pipx install --pip-args "-c .github/workflows/constraints.txt" poetry
+        poetry --version
+
+    - name: Set up Python
+      uses: actions/setup-python@v5.0.0
+      with:
+        python-version: "3.11"
+        cache: "poetry"
+
+    - name: Install dependencies
+      run: |
+        poetry install
+
+    - name: Build doc with Sphinx
+      run: |
+        poetry run sphinx-build docs docs/_build
+          
+    - name: Deploy Preview
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs/preview
