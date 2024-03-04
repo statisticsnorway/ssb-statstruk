@@ -46,14 +46,6 @@ jobs:
       - name: Build doc with Sphinx
         run: |
           poetry run sphinx-build docs docs/_build
-          
-      - name: Convert Markdown with formulas to HTML
-        uses: docker://pandoc/core:2.9
-        with:
-          args: >-
-            --mathjax
-            --output=docs/_build/theory_rate.html
-            docs/theory_rate.md
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
