@@ -47,6 +47,10 @@ jobs:
         run: |
           poetry run sphinx-build docs docs/_build
 
+      - name: Convert Markdown with formulas to HTML
+        run: |
+          pandoc docs/theory_rate.md -o docs/_build/theory_rate.html --mathjax
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
