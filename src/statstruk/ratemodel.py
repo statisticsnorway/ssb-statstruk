@@ -506,9 +506,7 @@ class ratemodel(ssbmodel):
 
             # Aggregate to domain
             result = (
-                strata_df[[domain, "N", "n", self.y_var, "var1"]]
-                .groupby(domain)
-                .sum()
+                strata_df[[domain, "N", "n", self.y_var, "var1"]].groupby(domain).sum()
             )
 
             # Add in CV
@@ -536,9 +534,7 @@ class ratemodel(ssbmodel):
 
             # Aggregate to domain
             result = (
-                strata_df[
-                    [domain, "N", "n", selv.y_var, "var1", "var2", "var3"]
-                ]
+                strata_df[[domain, "N", "n", self.y_var, "var1", "var2", "var3"]]
                 .groupby(domain)
                 .sum()
             )

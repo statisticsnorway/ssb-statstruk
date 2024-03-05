@@ -14,9 +14,9 @@ Estimates based on a rate model are based on the following model:
 y_{hi} = \beta_h x_{hi} + \epsilon_{hi}
 ```
 
-where \(y_{hi}) is the variable of interest for unit {math}`i` in stratum {math}`h`, {math}`\beta_h` is the rate for the stratum, {math}`x_{hi}` is the explanatory variable, and {math}`\epsilon_{hi}` is the residual.
+where {math}`y_{hi}` is the variable of interest for unit {math}`i` in stratum {math}`h`, {math}`\beta_h` is the rate for the stratum, {math}`x_{hi}` is the explanatory variable, and {math}`\epsilon_{hi}` is the residual.
 
-The variance structure of the residuals for a rate model is
+The variance structure of the residuals for a rate model is:
 
 ```{math}
 Var(\epsilon_{hi}) = x_{hi}\sigma^2_h
@@ -37,7 +37,7 @@ The estimate for the total ({math}`T_h`) in stratum {math}`h` is:
 \hat{T}_h = X_h \hat{\beta}_h
 ```
 
-where {math}`X_h$ is the sum of the explanatory variable in stratum {math}`h` for the population.
+where {math}`X_h` is the sum of the explanatory variable in stratum {math}`h` for the population.
 
 
 ### Standard variance estimation
