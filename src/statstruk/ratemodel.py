@@ -79,7 +79,7 @@ class ratemodel(ssbmodel):
         if (self.verbose == 2) & (exclude_auto == 0):
             print("Fitting final rate model")
 
-        # Define the model formula. For example, let's say you're modeling 'Number of Job Vacancies' as a function of 'Turnover'
+        # Define the model formula
         formula = y_var + "~" + x_var + "- 1"
         self.y_var = y_var
         self.x_var = x_var
@@ -506,7 +506,7 @@ class ratemodel(ssbmodel):
 
             # Aggregate to domain
             result = (
-                strata_df[[domain, "N", "n", "job_vacancies_est", "var1"]]
+                strata_df[[domain, "N", "n", self.y_var, "var1"]]
                 .groupby(domain)
                 .sum()
             )
@@ -537,7 +537,7 @@ class ratemodel(ssbmodel):
             # Aggregate to domain
             result = (
                 strata_df[
-                    [domain, "N", "n", "job_vacancies_est", "var1", "var2", "var3"]
+                    [domain, "N", "n", selv.y_var, "var1", "var2", "var3"]
                 ]
                 .groupby(domain)
                 .sum()
