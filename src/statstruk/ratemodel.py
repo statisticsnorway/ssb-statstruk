@@ -79,7 +79,7 @@ class ratemodel(ssbmodel):
         if (self.verbose == 2) & (exclude_auto == 0):
             print("Fitting final rate model")
 
-        # Define the model formula. For example, let's say you're modeling 'Number of Job Vacancies' as a function of 'Turnover'
+        # Define the model formula
         formula = y_var + "~" + x_var + "- 1"
         self.y_var = y_var
         self.x_var = x_var
@@ -493,7 +493,7 @@ class ratemodel(ssbmodel):
 
         # Add estimates
         strata_df["beta"] = pd.to_numeric(strata_df["beta"])
-        strata_df[self.y_var + "_est"] = pd.to_numeric(
+        strata_df[f"{self.y_var}_est"] = pd.to_numeric(
             strata_df["beta"] * strata_df["x_sum_pop"]
         )
 
@@ -506,14 +506,14 @@ class ratemodel(ssbmodel):
 
             # Aggregate to domain
             result = (
-                strata_df[[domain, "N", "n", "job_vacancies_est", "var1"]]
+                strata_df[[domain, "N", "n", f"{self.y_var}_est", "var1"]]
                 .groupby(domain)
                 .sum()
             )
 
             # Add in CV
-            result[self.y_var + "_CV"] = (
-                np.sqrt(result.var1) / result[self.y_var + "_est"] * 100
+            result[f"{self.y_var}_CV"] = (
+                np.sqrt(result.var1) / result[f"{self.y_var}_est"] * 100
             )
 
             # drop extra variables
@@ -537,21 +537,21 @@ class ratemodel(ssbmodel):
             # Aggregate to domain
             result = (
                 strata_df[
-                    [domain, "N", "n", "job_vacancies_est", "var1", "var2", "var3"]
+                    [domain, "N", "n", f"{self.y_var}_est", "var1", "var2", "var3"]
                 ]
                 .groupby(domain)
                 .sum()
             )
 
             # Add in CV
-            result[self.y_var + "_CV1"] = (
-                np.sqrt(result.var1) / result[self.y_var + "_est"] * 100
+            result[f"{self.y_var}_CV1"] = (
+                np.sqrt(result.var1) / result[f"{self.y_var}_est"] * 100
             )
-            result[self.y_var + "_CV2"] = (
-                np.sqrt(result.var2) / result[self.y_var + "_est"] * 100
+            result[f"{self.y_var}_CV2"] = (
+                np.sqrt(result.var2) / result[f"{self.y_var}_est"] * 100
             )
-            result[self.y_var + "_CV3"] = (
-                np.sqrt(result.var3) / result[self.y_var + "_est"] * 100
+            result[f"{self.y_var}_CV3"] = (
+                np.sqrt(result.var3) / result[f"{self.y_var}_est"] * 100
             )
 
             # drop extra variables
