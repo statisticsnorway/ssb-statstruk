@@ -31,16 +31,12 @@ def test_statstruk_ssbmodel_verbose() -> None:
 def test_statruk_ssbmodel_check() -> None:
     with pytest.raises(ValueError):
         mod1 = ratemodel(p_data, s_data, id_nr="virk_nr")
-    # check that error raised if missing values in id variable    
+    # check that error raised if missing values in id variable
     s_data.iloc[0, 0] = np.nan
     with pytest.raises(ValueError):
         mod1 = ratemodel(p_data, s_data, id_nr="id")
-        
+
     s_data.iloc[0, 0] = 1
     p_data.iloc[0, 0] = np.nan
     with pytest.raises(ValueError):
         mod1 = ratemodel(p_data, s_data, id_nr="id")
-    
-
-
-
