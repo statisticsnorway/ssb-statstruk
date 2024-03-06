@@ -45,10 +45,9 @@ sample_df = dp.read_pandas(f"{bucket}/{folder}/sample.parquet")
 
 # +
 # pop_df.head()
-
-# +
-# sample_df.head()
 # -
+
+sample_df.head()
 
 
 # ## Standard run of rate model
@@ -61,11 +60,11 @@ mod1.fit(
     control_extremes=True,
 )
 
-mod1.get_estimates()
+mod1.get_estimates(uncertainty_type="SE_VAR_CI", variance_type="standard")
 
-mod1.get_estimates("size")
+mod1.get_estimates("size", uncertainty_type="VAR_CI")
 
-mod1.get_estimates("country")
+mod1.get_estimates("country", uncertainty_type="CI")
 
 mod1.get_coeffs
 
@@ -138,3 +137,12 @@ mod1.get_estimates()
 
 
 mod1.get_extremes()
+
+# ## Set up instance with missing
+
+# should raise an error
+sample_df.iloc[0, 0] = np.nan
+mod1 = ratemodel(pop_df, sample_df, id_nr="id")
+
+pop_df.iloc[0, 0] = np.nan
+mod2 = ratemodel(pop_df, sample_df, id_nr="id")

@@ -1,6 +1,6 @@
 # Quick guide to running a rate model with **_statstruk_**
 
-The python package **_statstruk_** is designed to make running estimation models for business surveys easier with options for standard and robust variance estimation as well as outlier detection. This quick guide is written (mostly) for those at Statistics Norway and uses an example data set, hosted on their internal Dapla platform. This is a practical guide with examples; see [Theory for rate model estimations](https://github.com/statisticsnorway/ssb-statstukrt/docs/theory_rate.md) for the formulas used in the functions.
+The python package **_statstruk_** is designed to make running estimation models for business surveys easier with options for standard and robust variance estimation as well as outlier detection. This quick guide is written (mostly) for those at Statistics Norway and uses an example data set, hosted on their internal Dapla platform. This is a practical guide with examples; see [Theory for rate model estimations](https://statisticsnorway.github.io/ssb-statstruk/theory_rate.html) for the formulas used in the functions.
 
 ## Installation
 The package is on PyPI can be installed in a poetry environment by running the following in a terminal:
@@ -11,7 +11,7 @@ poetry install ssb-statstruk
 ## Import module
 The module can then be imported into a python session/notebook. The main class used is called `ratemodel` and can be imported with:
 ```python
-import ratemodel from statstruk
+from statstruk import ratemodel
 ```
 
 ## Data requirements
@@ -45,7 +45,7 @@ The model can be initialize with the ddata by running the ´ratemodel()´ functi
 ```python
 mod = ratemodel(pop_df, sample_df, id_nr="id")
 ```
-This function initiates an instance of the `ratemodel` class and runs some initial checks. If you want extra output throughout the fitting and esitmation you can set the paramter ´verbose=2´ for more descriptive inputs.
+This function initiates an instance of the `ratemodel` class and runs some initial checks. If you want extra output throughout the fitting and esitmation you can set the paramter ´verbose=2´ for more descriptive prints.
 
 ## Fit model
 The model can now be fit using the `fit()` function. The name of the explanatory variable (`x_var`)  and target variable (`y_var`) need to be provided. If the model should be run within strata, the name of the variable(s) should be given as the `strata_var` parameter.
@@ -61,31 +61,46 @@ Estimates for the total values and their uncertainty within strata can be fetche
 ```python
 mod.get_estimates()
 ```
-This calculates robust variance estimations and the coefficient of variation for each stratum. Formulas used in the estimation calculations can be found in [Theory for rate model estimations](https://github.com/statisticsnorway/ssb-statstukrt/docs/theory_rate.md). Sometimes it is useful to see the estimates that are not the strata but other domains (for example at a higher industry level, or for the country). This can be specified using the `domain` parameter.
+This calculates (robust) variance estimations and the uncertainty for each stratum. Formulas used in the estimation calculations can be found in [Theory for rate model estimations](https://github.com/statisticsnorway/ssb-statstukrt/docs/theory_rate.md). The parameter `uncertainty_type` controls which uncertainty measures are returned. The coefficient of variation ("CV") is returned by default, however, standard errors ("SE"), variance ("VAR"), confidence intervals ("CI") or combinations of these can be specified. For example to get the estimates with their standard errors:
+
+```python
+mod.get_estimates(uncertainty_type = "SE")
+```
+To get both the coefficient of variation and confidence intervals use
+
+```python
+mod.get_estimates(uncertainty_type = "CV_CI")
+```
+Sometimes it is useful to see the estimates that are not the strata but other domains (for example at a higher industry level, or for the country). This can be specified using the `domain` parameter.
 
 ```python
 mod.get_estimates(domain = "country")
 ```
 Domain groups may be either aggregates of the strata or other variables found in the population data. Robust variance estimates are only currently avaible for  domains that are aggregates of strata, otherwise standard variance estimates are calculated.
 
-If you want to force standard variance estimations you can use the `variance_type="standard"` parameter.
+If you want to force standard variance estimations you can use the `variance_type="standard"` parameter. Otherwise, robust estimation methods are used.
 
 ## Dealing with outliers
-Outliers can be identified using studentized residuals or $G$ values. They can be shown once a model is fitted using the `get_extremes()` function
+Outliers can be identified using studentized residuals or {math}`G` values. They can be shown once a model is fitted using the `get_extremes()` function
 
 ```python
 mod.get_extremes()
 ```
-This will show observations that exceeded the studentized residuals or $G$ thresholds. Thresholds can be changed using the `rbound` (studentized residuals threshold) and `gbound` (g-value multiplier threshold) parameters.
+This will show observations that exceded the studentized residuals or {math}`G` thresholds. By default, both studentized residuals and {math}`G` thresholds are used. The parameter `threshold_type` can be specified as "rstud" for using only studentized residuals, "G" for using {math}`G` thresholds or "both".
+
+```python
+mod.get_extremes(threshold_type="rstud")
+```
+Thresholds can also be changed using the `rbound` (studentized residuals threshold) and `gbound` (g-value multiplier threshold) parameters. For example to use both thresholds but with thresholds of 5:
 
 ```python
 mod.get_extremes(gbound = 5, rbound = 5)
 ```
 
-Specific outlier observation can also be removed from the fitting process using the `exclude` parameter. This should be a list of the id numbers of the units in the sample to remove. For example, to exclude units with id numbers "5" and "9":
+Specific outlier observation can also be removed from the fitting process using the `exclude` parameter. This should be a list of the id numbers of the units in the sample to remove. For example, to exclude units with id numbers "59678" and "59303":
 
 ```python
-mod.fit(x_var="employees", y_var="job_vacancies", strata_var="industry", exclude = [5, 9])
+mod.fit(x_var="employees", y_var="job_vacancies", strata_var="industry", exclude = ["59678", "59303"])
 ```
 These units are then classified into their own seperate stratum and don't contribute to the variance.
 

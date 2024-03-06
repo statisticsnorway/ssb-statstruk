@@ -53,13 +53,13 @@ where {math}`\hat{\sigma}_h^2` is estimated from the model as
 \hat{\sigma}_h^2 =\frac{1}{n_h-1}\sum_{i\in s_h}\frac{(y_{hi} - \hat{\beta_h}x_{hi})^2}{x_{hi}}
 ```
 
-Furthermore, the standard error ({math}`SE`) is
+Furthermore, the standard error (SE) is
 
 ```{math}
 SE(\hat{T_h}-T_h)= \sqrt{\hat{Var}(\hat{T_h}-T_h)}
 ```
 
-and the coefficient of variation ({math}`CV`) is then
+and the coefficient of variation (CV) is then
 
 ```{math}
 CV(\hat{T_h}-T_h) = \frac{SE(\hat{T_h}-T_h)}{\hat{T_h}}
@@ -80,15 +80,15 @@ where {math}`X_{h|s_h}` is the sum of the explanatory variable in stratum {math}
 
 ```{math}
 Var_{robust1} &: d_{hi} = e_{hi}^2 \\
-Var_{robust2} &: d_{hi} = \frac{e_{hi}^2}{1-hat_{hi}} \\
-Var_{robust3} &: d_{hi} = \frac{e_{hi}^2}{(1-hat_{hi})^2}
+Var_{robust2} &: d_{hi} = \frac{e_{hi}^2}{1-v_{hi}} \\
+Var_{robust3} &: d_{hi} = \frac{e_{hi}^2}{(1-v_{hi})^2}
 ```
 
 
-where {math}`e_{hi}` is the residual of observation {math}`i` in the model in stratum {math}`h` and {math}`hat_{hi}` is the {math}`i`th value of the diagonal from hat matrix, defined for a rate model as
+where {math}`e_{hi}` is the residual of observation {math}`i` in the model in stratum {math}`h` and {math}`v_{hi}` is the {math}`i`th value of the diagonal from the hat matrix, defined for a rate model as
 
 ```{math}
-hat_h=W_h^{1/2}X_h(X_h^TW_hX_h)^{−1}X_h^TW_h^{1/2}
+v_h=W_h^{1/2}X_h(X_h^TW_hX_h)^{−1}X_h^TW_h^{1/2}
 ```
 
 where {math}`W_h` is the vector of weights which is {math}`1/X_h` for a rate model.
@@ -154,6 +154,6 @@ Absolute values of the studentized residual values above a criteria are then cla
 The difference of fits ({math}`G`) can be calculated from the studentized residuals and hat values as
 
 ```{math}
-G=t_{hi|i} \sqrt{\frac{hats_{hi}}{1 - hats_{hi}}}
+G=t_{hi|i} \sqrt{\frac{v_{hi}}{1 - v_{hi}}}
 ```
 Absolute values of {math}`G` above a specified threshold are classified as outliers. The thresold value used for outlier values of {math}`G` in rate models is generally {math}`\lambda \sqrt{1/n_h}` where {math}`\lambda` is often set to 2 but can be adjusted.

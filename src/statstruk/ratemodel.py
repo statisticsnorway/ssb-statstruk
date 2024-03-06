@@ -32,8 +32,6 @@ class ratemodel(ssbmodel):
     ) -> None:
         """Initialization of ratemodel object."""
         super().__init__(pop_data, sample_data, id_nr)
-        # self.pop_data = pop_data
-        # self.sample_data = sample_data
 
     def fit(
         self,
@@ -376,7 +374,7 @@ class ratemodel(ssbmodel):
         V = x_pop**2 * (x_pop - x_utv) / x_pop * s2 / x_utv
         return V
 
-    def _get_domain_estimates(self, domain: str) -> pd.DataFrame:
+    def _get_domain_estimates(self, domain: str, uncertainty_type: str) -> pd.DataFrame:
         """Get domain estimation for case where domains are not an aggregation of strata."""
         # Collect data
         self._add_flag()
@@ -414,13 +412,29 @@ class ratemodel(ssbmodel):
                 "domain": d,
                 "N": N,
                 "n": n,
-                f"{self.y_var}_est": est,
-                f"{self.y_var}_variance": var,
+                f"{self.y_var}_EST": est,
+                f"{self.y_var}_VAR": var,
+                f"{self.y_var}_SE": np.sqrt(var),
+                f"{self.y_var}_LB": est - (1.96 * np.sqrt(var)),
+                f"{self.y_var}_UB": est + (1.96 * np.sqrt(var)),
                 f"{self.y_var}_CV": np.sqrt(var) / est * 100,
             }
 
-        # Format and return
+        # Format and drop variables that are not asked for
         domain_pd = pd.DataFrame(domain_df).T
+
+        if "CV" not in uncertainty_type:
+            domain_pd = domain_pd.drop([f"{self.y_var}_CV"], axis=1)
+
+        if "SE" not in uncertainty_type:
+            domain_pd = domain_pd.drop([f"{self.y_var}_SE"], axis=1)
+
+        if "CI" not in uncertainty_type:
+            domain_pd = domain_pd.drop([f"{self.y_var}_LB", f"{self.y_var}_UB"], axis=1)
+
+        if "VAR" not in uncertainty_type:
+            domain_pd = domain_pd.drop([f"{self.y_var}_VAR"], axis=1)
+
         return domain_pd
 
     def _get_domain(self, domain: str) -> Any:
@@ -452,12 +466,16 @@ class ratemodel(ssbmodel):
         return domain_mapped.str[0]
 
     def get_estimates(
-        self, domain: str = "", variance_type: str = "robust"
+        self,
+        domain: str = "",
+        uncertainty_type: str = "CV",
+        variance_type: str = "robust",
     ) -> pd.DataFrame:
         """Get estimates for previously run model within strata or domains. Variance and CV estimates are returned for each domain.
 
         Args:
             domain: Name of the variable to use for estimation. Should be in the population data.
+            uncertainty_type: Which uncertainty measures to return. Choose between 'CV' (default) for coefficient of variation, 'VAR' for variance, 'SE' for standard errors, 'CI' for confidence intervals. Multiple measures can be returned with combinations of these, for example "CV_SE" returns both the coefficient of variation and the standard error.
             variance_type: Choose from 'robust' or 'standard' estimation of variance. Currently only robust estimation is calculated for strata and aggregated strata domains estimation and standard for other domains.
 
         Returns:
@@ -482,7 +500,7 @@ class ratemodel(ssbmodel):
                 print(
                     "Domain variable is not an aggregation of strata variables. Only standard variance calculations are available."
                 )
-            return self._get_domain_estimates(domain)
+            return self._get_domain_estimates(domain, uncertainty_type)
 
         # Format variables
         strata_df["N"] = pd.to_numeric(strata_df["N"])
@@ -493,7 +511,7 @@ class ratemodel(ssbmodel):
 
         # Add estimates
         strata_df["beta"] = pd.to_numeric(strata_df["beta"])
-        strata_df[f"{self.y_var}_est"] = pd.to_numeric(
+        strata_df[f"{self.y_var}_EST"] = pd.to_numeric(
             strata_df["beta"] * strata_df["x_sum_pop"]
         )
 
@@ -502,22 +520,38 @@ class ratemodel(ssbmodel):
             var1 = []
             for s in strata_df["_strata_var_mod"]:
                 var1.append(self._get_variance(s))
-            strata_df["var1"] = np.array(var1)
+            strata_df[f"{self.y_var}_VAR"] = np.array(var1)
 
             # Aggregate to domain
             result = (
-                strata_df[[domain, "N", "n", f"{self.y_var}_est", "var1"]]
+                strata_df[[domain, "N", "n", f"{self.y_var}_EST", f"{self.y_var}_VAR"]]
                 .groupby(domain)
                 .sum()
             )
 
             # Add in CV
-            result[f"{self.y_var}_CV"] = (
-                np.sqrt(result.var1) / result[f"{self.y_var}_est"] * 100
-            )
+            if "CV" in uncertainty_type:
+                result[f"{self.y_var}_CV"] = (
+                    np.sqrt(result[f"{self.y_var}_VAR"])
+                    / result[f"{self.y_var}_EST"]
+                    * 100
+                )
 
-            # drop extra variables
-            result = result.drop(["var1"], axis=1)
+            # Add SE
+            if "SE" in uncertainty_type:
+                result[f"{self.y_var}_SE"] = np.sqrt(result[f"{self.y_var}_VAR"])
+
+            # Add in Confidence interval
+            if "CI" in uncertainty_type:
+                result[f"{self.y_var}_LB"] = result[f"{self.y_var}_EST"] - (
+                    1.96 * np.sqrt(result[f"{self.y_var}_VAR"])
+                )
+                result[f"{self.y_var}_UB"] = result[f"{self.y_var}_EST"] + (
+                    1.96 * np.sqrt(result[f"{self.y_var}_VAR"])
+                )
+
+            if "VAR" not in uncertainty_type:
+                result = result.drop([f"{self.y_var}_VAR"], axis=1)
 
         if variance_type == "robust":
             var1 = []
@@ -530,41 +564,89 @@ class ratemodel(ssbmodel):
                     var2.append(var[1])
                     var3.append(var[2])
 
-            strata_df["var1"] = np.array(var1)
-            strata_df["var2"] = np.array(var2)
-            strata_df["var3"] = np.array(var3)
+            strata_df[f"{self.y_var}_VAR1"] = np.array(var1)
+            strata_df[f"{self.y_var}_VAR2"] = np.array(var2)
+            strata_df[f"{self.y_var}_VAR3"] = np.array(var3)
 
             # Aggregate to domain
             result = (
                 strata_df[
-                    [domain, "N", "n", f"{self.y_var}_est", "var1", "var2", "var3"]
+                    [
+                        domain,
+                        "N",
+                        "n",
+                        f"{self.y_var}_EST",
+                        f"{self.y_var}_VAR1",
+                        f"{self.y_var}_VAR2",
+                        f"{self.y_var}_VAR3",
+                    ]
                 ]
                 .groupby(domain)
                 .sum()
             )
 
             # Add in CV
-            result[f"{self.y_var}_CV1"] = (
-                np.sqrt(result.var1) / result[f"{self.y_var}_est"] * 100
-            )
-            result[f"{self.y_var}_CV2"] = (
-                np.sqrt(result.var2) / result[f"{self.y_var}_est"] * 100
-            )
-            result[f"{self.y_var}_CV3"] = (
-                np.sqrt(result.var3) / result[f"{self.y_var}_est"] * 100
-            )
+            if "CV" in uncertainty_type:
+                result[f"{self.y_var}_CV1"] = (
+                    np.sqrt(result[f"{self.y_var}_VAR1"])
+                    / result[f"{self.y_var}_EST"]
+                    * 100
+                )
+                result[f"{self.y_var}_CV2"] = (
+                    np.sqrt(result[f"{self.y_var}_VAR2"])
+                    / result[f"{self.y_var}_EST"]
+                    * 100
+                )
+                result[f"{self.y_var}_CV3"] = (
+                    np.sqrt(result[f"{self.y_var}_VAR3"])
+                    / result[f"{self.y_var}_EST"]
+                    * 100
+                )
 
-            # drop extra variables
-            result = result.drop(["var1", "var2", "var3"], axis=1)
+            # Add SE
+            if "SE" in uncertainty_type:
+                result[f"{self.y_var}_SE1"] = np.sqrt(result[f"{self.y_var}_VAR1"])
+                result[f"{self.y_var}_SE2"] = np.sqrt(result[f"{self.y_var}_VAR2"])
+                result[f"{self.y_var}_SE3"] = np.sqrt(result[f"{self.y_var}_VAR3"])
+
+            # Add in Confidence interval
+            if "CI" in uncertainty_type:
+                result[f"{self.y_var}_LB1"] = result[f"{self.y_var}_EST"] - (
+                    1.96 * np.sqrt(result[f"{self.y_var}_VAR1"])
+                )
+                result[f"{self.y_var}_UB1"] = result[f"{self.y_var}_EST"] + (
+                    1.96 * np.sqrt(result[f"{self.y_var}_VAR1"])
+                )
+                result[f"{self.y_var}_LB2"] = result[f"{self.y_var}_EST"] - (
+                    1.96 * np.sqrt(result[f"{self.y_var}_VAR2"])
+                )
+                result[f"{self.y_var}_UB2"] = result[f"{self.y_var}_EST"] + (
+                    1.96 * np.sqrt(result[f"{self.y_var}_VAR2"])
+                )
+                result[f"{self.y_var}_LB3"] = result[f"{self.y_var}_EST"] - (
+                    1.96 * np.sqrt(result[f"{self.y_var}_VAR3"])
+                )
+                result[f"{self.y_var}_UB3"] = result[f"{self.y_var}_EST"] + (
+                    1.96 * np.sqrt(result[f"{self.y_var}_VAR3"])
+                )
+
+            if "VAR" not in uncertainty_type:
+                result = result.drop(
+                    [f"{self.y_var}_VAR1", f"{self.y_var}_VAR2", f"{self.y_var}_VAR3"],
+                    axis=1,
+                )
 
         return result
 
-    def get_extremes(self, rbound: float = 2, gbound: float = 2) -> pd.DataFrame:
+    def get_extremes(
+        self, threshold_type: str = "both", rbound: float = 2, gbound: float = 2
+    ) -> pd.DataFrame:
         """Get observations with extreme values based on their rstudized residual value or G value.
 
         Args:
-            rbound: Multiplicative value to determine the extremity of the studentized residual values.
-            gbound: Multiplicative value to determine the extremity of the G values.
+            threshold_type: Which threshold type to use. Choose between 'rstud' for studentized residuals, 'G' for dffits/G-value or 'both'(default) for both.
+            rbound: Multiplicative value to determine the extremity of the studentized residual values. (Default = 2)
+            gbound: Multiplicative value to determine the extremity of the G values. (Default = 2)
 
         Returns:
             A pd.DataFrame containing units with extreme values beyond a set boundary.
@@ -581,13 +663,18 @@ class ratemodel(ssbmodel):
             new[self.x_var] = new["xvar"]
             new[self.y_var] = new["yvar"]
             new["x_sum_pop"] = self.strata_results[k]["x_sum_pop"]
-            new["y_est"] = new["beta"] * new["x_sum_pop"]
-            new["y_est_ex"] = new["beta_ex"] * new["x_sum_pop"]
+            new[f"{self.y_var}_EST"] = new["beta"] * new["x_sum_pop"]
+            new[f"{self.y_var}_EST_ex"] = new["beta_ex"] * new["x_sum_pop"]
             new["gbound"] = gbound * np.sqrt(1 / self.strata_results[k]["n"])
             extremes = pd.concat([extremes, new])
         condr = np.abs(extremes["rstud"]) > rbound
         condg = np.abs(extremes["G"]) > extremes["gbound"]
-        extremes = extremes.loc[condr | condg]
+        if threshold_type == "rstud":
+            extremes = extremes.loc[condr]
+        elif threshold_type == "G":
+            extremes = extremes.loc[condg]
+        else:
+            extremes = extremes.loc[condr | condg]
         extremes = extremes[
             [
                 self.id_nr,
@@ -596,8 +683,8 @@ class ratemodel(ssbmodel):
                 "N",
                 self.x_var,
                 self.y_var,
-                "y_est",
-                "y_est_ex",
+                f"{self.y_var}_EST",
+                f"{self.y_var}_EST_ex",
                 "gbound",
                 "G",
                 "rstud",

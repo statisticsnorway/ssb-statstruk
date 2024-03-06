@@ -64,9 +64,6 @@ class ssbmodel:
             check_for_char: False by default. If True, checks for an ID variable that can be numeric or character.
             remove_missing: Whether to remove missing matches. Default True.
 
-        Returns:
-            None: The function will either pass silently or raise an error.
-
         Raises:
             ValueError: If the variable is not numeric (when not checking for ID) or if the variable doesn't exist in the dataset.
         """
@@ -76,18 +73,15 @@ class ssbmodel:
                 f"Variable '{var_name}' not found in the {data_name} dataset."
             )
 
-        # If checking for an ID variable, just check for existence
-        if check_for_char:
-            return  # Variable exists, no further checks needed
-
-        # If not checking for an ID, verify that the variable is numeric
         # value: pd.Series[Any] = dataset[var_name]
         value = dataset[var_name]
 
-        if not np.issubdtype(value.dtype, np.number):  # type: ignore
-            raise ValueError(
-                f"Variable '{var_name}' in the {data_name} dataset needs to be numeric but isn't."
-            )
+        # If not checking for an ID, verify that the variable is numeric
+        if not check_for_char:
+            if not np.issubdtype(value.dtype, np.number):  # type: ignore
+                raise ValueError(
+                    f"Variable '{var_name}' in the {data_name} dataset needs to be numeric but isn't."
+                )
 
         # Check and remove observations with missing values
         if (remove_missing) & (data_name == "sample"):
@@ -102,7 +96,7 @@ class ssbmodel:
             # Give error for missing values
             if value.isna().any():
                 raise ValueError(
-                    f"Variable '{var_name}' contains missing values. Please fix and try again or set remove_missing = False."
+                    f"Variable '{var_name}' contains missing values. Please fix and try again."
                 )
 
     def _add_flag(self) -> None:
