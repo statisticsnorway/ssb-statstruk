@@ -199,9 +199,9 @@ class ratemodel(ssbmodel):
 
         # Set up coefficient dictionaries
         strata_results: dict["str", Any] = {}  # Each stratum as key
-        obs_data: dict["str", Any] = (
-            {}
-        )  # Each stratum as key - consider changing to virk id?
+        obs_data: dict[
+            "str", Any
+        ] = {}  # Each stratum as key - consider changing to virk id?
 
         # Iterate over each stratum in sample and fit model
         for stratum, group in self.sample_data.groupby("_strata_var_mod"):
