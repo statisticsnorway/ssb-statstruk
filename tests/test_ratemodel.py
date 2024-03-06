@@ -71,17 +71,43 @@ def test_statstruk_ratemodel_get_estimates() -> None:
 
     # test estimates can be extracted
     est_df = mod1.get_estimates()
-    assert int(est_df["job_vacancies_est"].iloc[0]) == 24186  # check this with struktur
+    assert int(est_df["job_vacancies_EST"].iloc[0]) == 24186  # check this with struktur
 
     # test for cross strata domain estimates
     est_df2 = mod1.get_estimates("size")
-    assert int(est_df2["job_vacancies_est"].iloc[0]) == 818  # check this with struktur
+    assert int(est_df2["job_vacancies_EST"].iloc[0]) == 818  # check this with struktur
 
     # test for aggregated domain estimates
     est_df3 = mod1.get_estimates("country")
     assert (
-        int(est_df3["job_vacancies_est"].values[0]) == 119773
+        int(est_df3["job_vacancies_EST"].values[0]) == 119773
     )  # check this with struktur
+
+
+def test_statstruk_ratemodel_uncertainty_type() -> None:
+    mod1 = ratemodel(p_data, s_data, id_nr="id")
+    mod1.fit(
+        x_var="employees",
+        y_var="job_vacancies",
+        strata_var="industry",
+        control_extremes=False,
+    )
+    cv_df = mod1.get_estimates(uncertainty_type="CV", variance_type="standard")
+    columns_ending_with_cv = [
+        column for column in cv_df.columns if column.endswith("_CV")
+    ]
+    assert len(columns_ending_with_cv) > 0
+    other_df = mod1.get_estimates(
+        uncertainty_type="CI_SE_VAR", variance_type="standard"
+    )
+    columns_ending_with_lb = [
+        column for column in other_df.columns if column.endswith("_LB")
+    ]
+    assert len(columns_ending_with_lb) > 0
+    columns_ending_with_CV = [
+        column for column in other_df.columns if column.endswith("_CV")
+    ]
+    assert len(columns_ending_with_CV) == 0
 
 
 def test_statstruk_ratemodel_get_extremes() -> None:
@@ -96,6 +122,8 @@ def test_statstruk_ratemodel_get_extremes() -> None:
     assert ex_df2.shape[0] == 45
     ex_df3 = mod1.get_extremes(rbound=5, gbound=5)
     assert ex_df3.shape[0] == 4
+    ex_df4 = mod1.get_extremes(rbound=3, threshold_type="rstud")
+    assert ex_df4.shape[0] == 1
 
     mod2 = ratemodel(p_data, s_data, id_nr="id")
     mod2.fit(
