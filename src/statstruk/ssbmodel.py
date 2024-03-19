@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 
 
@@ -78,7 +77,7 @@ class ssbmodel:
 
         # If not checking for an ID, verify that the variable is numeric
         if not check_for_char:
-            if not pd.api.types.is_numeric_dtype(value):  # type: ignore
+            if not pd.api.types.is_numeric_dtype(value):
                 raise ValueError(
                     f"Variable '{var_name}' in the {data_name} dataset needs to be numeric but isn't."
                 )

@@ -173,7 +173,6 @@ class ratemodel(ssbmodel):
             X = np.array(X)
             beta_ex_values = np.zeros(n)
             R = np.zeros(n)
-            
 
             for i in range(n):
                 # Exclude the i-th observation
@@ -192,13 +191,13 @@ class ratemodel(ssbmodel):
 
                 # Calculate sigma
                 sigma2 = sum((y_i - y_hat_j) ** 2 / X_i) * 1.0 / (n - 2)
-                
+
                 # Calculate and save studentized residuals
                 if (X[i] > 0) & (sigma2 > 0):
                     R[i] = res[i] / (np.sqrt(sigma2 * X[i]) * np.sqrt(1.0 - hh[i]))
                 else:
                     R[i] = np.nan
-            
+
             return (R, beta_ex_values)
 
         # Set up coefficient dictionaries
@@ -245,19 +244,25 @@ class ratemodel(ssbmodel):
                 # Add in residuals and hat values to observation info
                 hats = _get_hat(group[[x_var]].values, weights)
                 obs_info.update({"resids": model.resid.values, "hat": hats})
-                
+
                 # Check for x=0 and return message
                 if (any(group[x_var] == 0)) & (control_extremes):
-                    print(f"Values of zero detected in stratum {stratum!r}. These observations will not be assessed for extremeness.")
+                    print(
+                        f"Values of zero detected in stratum {stratum!r}. These observations will not be assessed for extremeness."
+                    )
 
                 # Check y for all 0's and return message
                 if (all(group[y_var] == 0)) & (control_extremes):
-                    print(f"All values for {y_var!r} in stratum {stratum!r} were zero. Extreme values need to be checked in other ways for this stratum.")
-                 
+                    print(
+                        f"All values for {y_var!r} in stratum {stratum!r} were zero. Extreme values need to be checked in other ways for this stratum."
+                    )
+
                 # Check y for all 0's but one
-                if sum(group[y_var] == 0) == (len(group)-1):
-                     print(f"Only one non-zero value found for {y_var!r} in stratum {stratum!r}. Extreme detection can't be performed for the non-zero observation.")
-                 
+                if sum(group[y_var] == 0) == (len(group) - 1):
+                    print(
+                        f"Only one non-zero value found for {y_var!r} in stratum {stratum!r}. Extreme detection can't be performed for the non-zero observation."
+                    )
+
                 # Add in studentized residuals and G values if specified
                 if control_extremes:
                     if len(group) == 2:
@@ -314,9 +319,8 @@ class ratemodel(ssbmodel):
         for stratum, group in self.pop_data.groupby("_strata_var_mod"):
             stratum_info = {"N": len(group), "x_sum_pop": group[x_var].sum()}
             # Condition to see if strata exists. This is for cases where excludes observations are already excluded due to missing data
-            if stratum in strata_results: 
-                strata_results[stratum].update(stratum_info) # type: ignore
- 
+            if stratum in strata_results:
+                strata_results[stratum].update(stratum_info)  # type: ignore
 
         # Set results to instance
         self.strata_results = strata_results
@@ -671,7 +675,7 @@ class ratemodel(ssbmodel):
             A pd.DataFrame containing units with extreme values beyond a set boundary.
         """
         self._check_extreme_run()
-        
+
         # Collect information from strata results and get_obs
         extremes = pd.DataFrame()
         for k in self.get_obs.keys():
@@ -687,7 +691,7 @@ class ratemodel(ssbmodel):
             new[f"{self.y_var}_EST_ex"] = new["beta_ex"] * new["x_sum_pop"]
             new["gbound"] = gbound * np.sqrt(1 / self.strata_results[k]["n"])
             extremes = pd.concat([extremes, new])
-        
+
         # create conditions and filter
         condr = (np.abs(extremes["rstud"]) > rbound) & (extremes["rstud"].notna())
         condg = (np.abs(extremes["G"]) > extremes["gbound"]) & (extremes["G"].notna())
@@ -697,7 +701,7 @@ class ratemodel(ssbmodel):
             extremes = extremes.loc[condg]
         else:
             extremes = extremes.loc[condr | condg]
-                          
+
         # Format return object
         extremes = extremes[
             [
