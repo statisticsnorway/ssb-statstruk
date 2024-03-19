@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 
 
@@ -78,9 +77,13 @@ class ssbmodel:
 
         # If not checking for an ID, verify that the variable is numeric
         if not check_for_char:
-            if not np.issubdtype(value.dtype, np.number):  # type: ignore
+            if not pd.api.types.is_numeric_dtype(value):
                 raise ValueError(
                     f"Variable '{var_name}' in the {data_name} dataset needs to be numeric but isn't."
+                )
+            if any(value < 0):
+                raise ValueError(
+                    f"There are negative values in the variable '{var_name}' in the {data_name} dataset. Consider a log transformation or another type of model."
                 )
 
         # Check and remove observations with missing values
