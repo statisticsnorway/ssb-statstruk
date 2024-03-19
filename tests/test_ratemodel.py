@@ -56,6 +56,13 @@ def test_statstruk_ratemodel_excludes() -> None:
     assert mod1.get_coeffs["_strata_var_mod"].iloc[2] == "B_surprise_9"
     assert mod1.get_estimates().shape[0] == 5
     assert mod1.get_weights().estimation_weights[0] == 1
+    
+    
+def test_statstruk_ratemodel_excludes_missing() -> None:
+    """Observation 9855 is missing y-value and is removed. It should therefore be ignored when exclude is specified"""
+    mod1 = ratemodel(p_data, s_data, id_nr="id")
+    mod1.fit(x_var="employees", y_var="job_vacancies", strata_var="industry", exclude = [9855, 9912], control_extremes=False)
+    assert isinstance(mod1.get_coeffs, pd.DataFrame)
 
 
 def test_statstruk_ratemodel_get_estimates() -> None:

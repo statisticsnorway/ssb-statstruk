@@ -297,7 +297,10 @@ class ratemodel(ssbmodel):
         # Loop through population also
         for stratum, group in self.pop_data.groupby("_strata_var_mod"):
             stratum_info = {"N": len(group), "x_sum_pop": group[x_var].sum()}
-            strata_results[stratum].update(stratum_info)  # type: ignore
+            # Condition to see if strata exists. This is for cases where excludes observations are already excluded due to missing data
+            if stratum in strata_results: 
+                strata_results[stratum].update(stratum_info) # type: ignore
+ 
 
         # Set results to instance
         self.strata_results = strata_results
