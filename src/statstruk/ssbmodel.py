@@ -82,6 +82,10 @@ class ssbmodel:
                 raise ValueError(
                     f"Variable '{var_name}' in the {data_name} dataset needs to be numeric but isn't."
                 )
+            if any(value < 0):
+                raise ValueError(
+                    f"There are negative values in the variable '{var_name}' in the {data_name} dataset. Consider a log transformation or another type of model."
+                )
 
         # Check and remove observations with missing values
         if (remove_missing) & (data_name == "sample"):
