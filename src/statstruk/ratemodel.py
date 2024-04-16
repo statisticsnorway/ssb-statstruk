@@ -12,7 +12,6 @@
 
 # Import libraries
 from typing import Any
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -40,9 +39,9 @@ class ratemodel(ssbmodel):
         self,
         y_var: str,
         x_var: str,
-        strata_var: Union[str, list[str]] = "",
+        strata_var: str | list[str] = "",
         control_extremes: bool = True,
-        exclude: Union[list[Union[str, int]], None] = None,
+        exclude: list[str | int] | None = None,
         exclude_auto: int = 0,
         remove_missing: bool = True,
         rbound: float = 2,
@@ -326,7 +325,7 @@ class ratemodel(ssbmodel):
             )
 
     def _update_strata(
-        self, df: pd.DataFrame, exclude: list[Union[str, int]]
+        self, df: pd.DataFrame, exclude: list[str | int]
     ) -> pd.DataFrame:
         """Update files to include a new variable for modelling including suprise strata."""
         # Use the 'loc' method to locate the rows where ID is in the exclude list and update 'strata'
@@ -416,8 +415,8 @@ class ratemodel(ssbmodel):
         hi = self.obs_data[strata]["hat"]
         ei = self.obs_data[strata]["resids"]
 
-        if (isinstance(ei, (pd.Series, np.ndarray))) & (
-            isinstance(hi, (pd.Series, np.ndarray))
+        if (isinstance(ei, (pd.Series | np.ndarray))) & (
+            isinstance(hi, (pd.Series | np.ndarray))
         ):
             # Calculate ai
             Xr = x_pop - x_utv
