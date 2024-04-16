@@ -325,7 +325,9 @@ class ratemodel(ssbmodel):
                 count=count,
             )
 
-    def _update_strata(self, df: pd.DataFrame, exclude: list[Union[str, int]]) -> None:
+    def _update_strata(
+        self, df: pd.DataFrame, exclude: list[Union[str, int]]
+    ) -> pd.DataFrame:
         """Update files to include a new variable for modelling including suprise strata."""
         # Use the 'loc' method to locate the rows where ID is in the exclude list and update 'strata'
         mask = df[self.id_nr].isin(exclude)
