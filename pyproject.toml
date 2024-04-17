@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ssb-statstruk"
-version = "0.0.4"
+version = "0.0.5"
 description = "SSB Statstruk"
 authors = ["Susie Jentoft <coo@ssb.no>"]
 license = "MIT"
