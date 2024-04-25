@@ -440,7 +440,12 @@ class ratemodel(ssbmodel):
         x_pop = self.strata_results[strata]["x_sum_pop"]
         x_utv = self.strata_results[strata]["x_sum_sample"]
         s2 = self.strata_results[strata]["sigma2"]
-        V = x_pop**2 * (x_pop - x_utv) / x_pop * s2 / x_utv
+        
+        if (x_pop > 0)  and (x_utv > 0):
+            V = x_pop**2 * (x_pop - x_utv) / x_pop * s2 / x_utv
+        else: 
+            V = np.nan
+        
         return V
 
     def _get_domain_estimates(self, domain: str, uncertainty_type: str) -> pd.DataFrame:
@@ -471,8 +476,8 @@ class ratemodel(ssbmodel):
                 mask_s = (temp_dom[strata_var] == s) & (
                     temp_dom[self.flag_var] == 0
                 )  # Those not in sample
-                Uh_sh = np.sum(temp_dom.loc[mask_s, self.x_var])
-                xh = res[s]["x_sum_sample"]
+                Uh_sh = np.sum(temp_dom.loc[mask_s, self.x_var]) # Sum of x not in sample
+                xh = res[s]["x_sum_sample"] # Sum of x in sample
                 s2 = res[s]["sigma2"]
                 var += s2 * (Uh_sh + xh) / xh * Uh_sh
 
@@ -592,10 +597,10 @@ class ratemodel(ssbmodel):
             for s in strata_df["_strata_var_mod"]:
                 var1.append(self._get_variance(s))
 
-            # Check for negative variances
+            # Check for negative variances - na is allowed here
             if any(x < 0 for x in var1):
                 print("Negative variances calculated. These are being adjusted to 0.")
-                var1 = [i if i >= 0 else 0 for i in var1]
+                var1 = [0 if i < 0 else i for i in var1]
             strata_df[f"{self.y_var}_VAR"] = np.array(var1)
 
             # Aggregate to domain
