@@ -102,13 +102,7 @@ class ssbmodel:
                     f"Variable '{var_name}' contains missing values. Please fix and try again."
                 )
 
-    def _add_flag(self) -> None:
-        """Add flag in population data to say if unit is in the sample or not."""
-        self.flag_var = "_flag_sample"
-        sample_ids = set(self.sample_data[self.id_nr])
-        self.pop_data[self.flag_var] = self.pop_data[self.id_nr].apply(
-            lambda x: 1 if x in sample_ids else 0
-        )
+
 
     def _check_model_run(self) -> None:
         """Check to ensure that model has been run before proceeding with other functions."""
