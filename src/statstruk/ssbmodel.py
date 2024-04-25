@@ -102,8 +102,6 @@ class ssbmodel:
                     f"Variable '{var_name}' contains missing values. Please fix and try again."
                 )
 
-
-
     def _check_model_run(self) -> None:
         """Check to ensure that model has been run before proceeding with other functions."""
         if not hasattr(self, "strata_results"):
