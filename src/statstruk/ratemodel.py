@@ -772,12 +772,12 @@ class ratemodel(ssbmodel):
         pop["beta"] = pop["_strata_var_mod"].apply(_get_beta)
 
         # Calculate imputed values
-        pop[f"{self.y_var}_imputed"] = pop["beta"] * pop[self.x_var]
+        pop[f"{self.y_var}_imp"] = pop["beta"] * pop[self.x_var]
 
         # Link in survey values
         id_to_yvar_map = utvalg.set_index(self.id_nr)[self.y_var]
-        pop[f"{self.y_var}_imputed"] = (
-            pop[self.id_nr].map(id_to_yvar_map).fillna(pop[f"{self.y_var}_imputed"])
+        pop[f"{self.y_var}_imp"] = (
+            pop[self.id_nr].map(id_to_yvar_map).fillna(pop[f"{self.y_var}_imp"])
         )
         pop_pd = pd.DataFrame(pop)
         return pop_pd
