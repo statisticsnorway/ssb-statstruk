@@ -482,7 +482,7 @@ class ratemodel(ssbmodel):
             # Get additional domain information on sample, pop sizes and estimates
             N = temp_dom.shape[0]
             n = np.sum(temp_dom[self.flag_var] == 1)
-            est = np.sum(temp_dom[f"{self.y_var}_imputed"])
+            est = np.sum(temp_dom[f"{self.y_var}_imp"])
 
             # Loop through strata to get the partial variances
             var = 0
