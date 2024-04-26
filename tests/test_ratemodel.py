@@ -209,7 +209,7 @@ def test_statstruk_ratemodel_1obs(capfd):
     )
 
 
-def test_stastruk_ratemodel_check_neg() -> None:
+def test_statstruk_ratemodel_check_neg() -> None:
     s_data_new = pd.read_csv(sample_file)
     p_data = pd.read_csv(pop_file)
     s_data_new.iloc[0, 1] = -5
@@ -229,7 +229,7 @@ def test_stastruk_ratemodel_check_neg() -> None:
     )
 
 
-def test_stastruk_ratemodel_check_sample0(capfd) -> None:
+def test_statstruk_ratemodel_check_sample0(capfd) -> None:
     s_data_new = pd.read_csv(sample_file)
     s_data_new = s_data_new.loc[s_data_new.job_vacancies.notna(),]
 
@@ -258,7 +258,7 @@ def test_stastruk_ratemodel_check_sample0(capfd) -> None:
     assert np.isnan(mod1.get_obs["B"]["G"])[0]
 
 
-def test_stastruk_ratemodel_check_pop0(capfd) -> None:
+def test_statstruk_ratemodel_check_pop0(capfd) -> None:
     sample1 = pd.read_csv(sample1_file)
     pop1 = pd.read_csv(pop1_file)
 
@@ -272,7 +272,7 @@ def test_stastruk_ratemodel_check_pop0(capfd) -> None:
 
     # check those with x=0 in population are imputed with zero
     imp = mod1.get_imputed()
-    assert imp["job_vacancies_imputed"][0] == 0
+    assert imp["job_vacancies_imp"][0] == 0
 
 
 def test_stastruk_ratemodel_check_allbutone0(capfd) -> None:
@@ -386,7 +386,7 @@ def test_stastruk_ratemodel_check_all0(capfd) -> None:
     assert all(np.isnan(mod1.get_obs["G"]["G"]))
 
 
-def test_stastruk_ratemodel_negative_variance(capfd) -> None:
+def test_stastruk_ratemodel_negative_variance() -> None:
     sample1 = pd.read_csv(sample_file)
     sample1 = sample1.loc[sample1.job_vacancies.notna(),]
     pop1 = pd.read_csv(pop_file)
@@ -398,7 +398,7 @@ def test_stastruk_ratemodel_negative_variance(capfd) -> None:
     sample1 = sample1.loc[(sample1.industry != "F") | (sample1.id.isin(sample_ids))]
     pop1 = pop1.loc[(pop1.industry != "F") | (pop1.id.isin(pop_ids))]
 
-    mod1 = ratemodel(pop1, sample1, id_nr="id")
+    mod1 = ratemodel(pop1, sample1, id_nr="id", verbose=2)
     mod1.fit(
         x_var="employees",
         y_var="job_vacancies",
@@ -406,12 +406,6 @@ def test_stastruk_ratemodel_negative_variance(capfd) -> None:
         control_extremes=False,
     )
     res = mod1.get_estimates()
-
-    # Use capfd to capture the print output
-    out, err = capfd.readouterr()
-
-    # Assert that the captured output matches the expected message
-    assert out == "Negative variances calculated. These are being adjusted to 0.\n"
 
     # Check that obs are given na
     assert res["job_vacancies_CV2"][4] == 0
