@@ -540,7 +540,7 @@ class ratemodel(ssbmodel):
         variance_type: str,
         return_type: str,
     ) -> pd.DataFrame:
-        """Clean up results set to include the chosen return type"""
+        """Clean up results set to include the chosen return type."""
         y_var = self.y_var
 
         # Format and add in CV, SE, CI
