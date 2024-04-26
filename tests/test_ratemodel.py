@@ -398,7 +398,7 @@ def test_stastruk_ratemodel_negative_variance() -> None:
     sample1 = sample1.loc[(sample1.industry != "F") | (sample1.id.isin(sample_ids))]
     pop1 = pop1.loc[(pop1.industry != "F") | (pop1.id.isin(pop_ids))]
 
-    mod1 = ratemodel(pop1, sample1, id_nr="id", verbose = 2)
+    mod1 = ratemodel(pop1, sample1, id_nr="id", verbose=2)
     mod1.fit(
         x_var="employees",
         y_var="job_vacancies",
