@@ -489,6 +489,7 @@ class ratemodel(ssbmodel):
             # Loop through strata to get the partial variances
             var = 0
             x_sum_sample = 0
+            x_sum_pop = 0
             for s in strata_unique:
                 mask_s = (temp_dom[strata_var] == s) & (
                     temp_dom[self.flag_var] == 0
@@ -498,18 +499,25 @@ class ratemodel(ssbmodel):
                 )  # Sum of x not in sample
                 xh = res[s]["x_sum_sample"]  # Sum of x in sample
                 s2 = res[s]["sigma2"]
-                x_sum_sample += xh
+                x_sum_pop += np.sum(temp_dom.loc[temp_dom[strata_var] == s, self.x_var])
+                x_sum_sample += np.sum(
+                    temp_dom.loc[
+                        (temp_dom[strata_var] == s) & (temp_dom[self.flag_var] == 1),
+                        self.x_var,
+                    ]
+                )
 
-                # Add in variance for stratum if sum of x is greater than 0
-                if xh > 0:
-                    var += s2 * (Uh_sh + xh) / xh * Uh_sh
+                # Add in variance for stratum if sum of x is greater than 0 and var is not na or inf!!!
+                if (xh > 0) & (not np.isinf(s2)) & (not np.isnan(s2)):
+                    var += s2 * Uh_sh * ((Uh_sh + xh) / xh)
 
             # Add calculations to domain dict
             domain_df[d] = {
                 "domain": d,
                 "N": N,
                 "n": n,
-                "x_sum_sample": x_sum_sample,
+                f"{self.x_var}_sum_pop": x_sum_pop,
+                f"{self.x_var}_sum_sample": x_sum_sample,
                 f"{self.y_var}_EST": est,
                 f"{self.y_var}_VAR": var,
             }
@@ -550,8 +558,6 @@ class ratemodel(ssbmodel):
                 )
 
             if "SE" in uncertainty_type:
-                print(f" i is: {i}")
-                print(result.dtypes)
                 result[f"{y_var}_SE{i}"] = np.sqrt(result[f"{y_var}_VAR{i}"])
 
             if "CI" in uncertainty_type:
@@ -565,8 +571,9 @@ class ratemodel(ssbmodel):
             if "VAR" not in uncertainty_type:
                 result = result.drop([f"{y_var}_VAR{i}"], axis=1)
 
-            if (return_type == "unbiased") & (i in ["1", "3"]):
-                result = result.drop([f"{y_var}_VAR{i}"], axis=1)
+            if (return_type == "unbiased") & (variance_type == "robust"):
+                result = result.drop([f"{y_var}_VAR1"], axis=1)
+                result = result.drop([f"{y_var}_VAR3"], axis=1)
 
         return result
 
@@ -641,8 +648,8 @@ class ratemodel(ssbmodel):
         strata_df["N"] = pd.to_numeric(strata_df["N"])
         strata_df["n"] = pd.to_numeric(strata_df["n"])
 
-        strata_df["x_sum_sample"] = pd.to_numeric(strata_df["x_sum_sample"])
-        strata_df["x_sum_pop"] = pd.to_numeric(strata_df["x_sum_pop"])
+        strata_df[f"{self.x_var}_sum_pop"] = pd.to_numeric(strata_df["x_sum_pop"])
+        strata_df[f"{self.x_var}_sum_sample"] = pd.to_numeric(strata_df["x_sum_sample"])
 
         # Add estimates
         strata_df["beta"] = pd.to_numeric(strata_df["beta"])
@@ -688,6 +695,8 @@ class ratemodel(ssbmodel):
                         domain,
                         "N",
                         "n",
+                        f"{self.x_var}_sum_pop",
+                        f"{self.x_var}_sum_sample",
                         f"{self.y_var}_EST",
                         f"{self.y_var}_VAR1",
                         f"{self.y_var}_VAR2",
