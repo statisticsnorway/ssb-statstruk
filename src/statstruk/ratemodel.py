@@ -11,7 +11,7 @@
 
 
 # Import libraries
-from typing import Any
+from typing import Any, List, Union
 
 import numpy as np
 import pandas as pd
@@ -32,25 +32,24 @@ class ratemodel(ssbmodel):
         id_nr: str,
         verbose: int = 1,
     ) -> None:
-        """Initialization of ratemodel object."""
         super().__init__(pop_data, sample_data, id_nr, verbose)
 
     def fit(
         self,
         y_var: str,
         x_var: str,
-        strata_var: str | list[str] = "",
+        strata_var: Union[str, List[str]] = "",
         control_extremes: bool = True,
-        exclude: list[str | int] | None = None,
+        exclude: List[Union[str, int]] = None,
         exclude_auto: int = 0,
         remove_missing: bool = True,
         rbound: float = 2,
         gbound: float = 2,
         count: int = 0,
     ) -> None:
-        """Run and fit a rate model within strata.
-
-        Args:
+        """Run and fit a rate model within strata."""
+        """
+         Args:
             y_var: The target variable to estimate from the survey.
             x_var: The variable to use as the explanatory variable in the model.
             strata_var: The stratification variable.
@@ -61,8 +60,24 @@ class ratemodel(ssbmodel):
             rbound: Multiplicative value to determine the extremity of the studentized residual values.
             gbound: Multiplicative value to determine the extremity of the G values.
             count: Integer value for the round count if using automatic exclusion of outliers.
-
         """
+
+        # Validate strata variable type
+        if not isinstance(strata_var, (str, list)):
+            raise ValueError("Strata variable (strata_var) must be either a string or a list of strings.")
+
+        # Check for duplicate identifiers in population and sample data
+        duplicate_pop = self.pop_data[self.id_nr].duplicated().any()
+        duplicate_sample = self.sample_data[self.id_nr].duplicated().any()
+
+        if duplicate_pop or duplicate_sample:
+            print(f"Warning: Duplicates found in {'pop_data' if duplicate_pop else ''}{' and ' if duplicate_pop and duplicate_sample else ''}{'sample_data' if duplicate_sample else ''} based on {self.id_nr}.")
+            proceed = input("Duplicates detected. Do you want to continue? (yes/no): ")
+            if proceed.lower() != 'yes':
+                print("Operation aborted by the user.")
+                return
+
+
         # Check variables
         self._check_variable(x_var, self.pop_data, data_name="population")
         self._check_variable(x_var, self.sample_data, remove_missing=remove_missing)
