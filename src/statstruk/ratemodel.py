@@ -323,7 +323,7 @@ class ratemodel(ssbmodel):
                 gbound=gbound,
                 count=count,
             )
-            
+
     @staticmethod
     def _fold_dataframe(df: pd.DataFrame) -> pd.Series:
         """This function folds all Series in a DataFrame into one Series with concatenated strings.
