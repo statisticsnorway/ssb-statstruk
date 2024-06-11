@@ -325,14 +325,14 @@ class ratemodel(ssbmodel):
             )
 
     @staticmethod
-    def _fold_dataframe(df: pd.DataFrame) -> pd.Series[Any]:  # type: ignore[type-arg]
+    def _fold_dataframe(df: pd.DataFrame) -> pd.Series:  # type: ignore[type-arg]
         """This function folds all Series in a DataFrame into one Series with concatenated strings.
 
         For every series in the df, it will convert the rows to strings, and then repeatedly
         concatenate the strings for every row in every series.
 
         """
-        series: list[pd.Series[Any]] = [df[col] for col in df]  # type: ignore[type-arg]
+        series: list[pd.Series] = [df[col] for col in df]  # type: ignore[type-arg]
         concat_series = series[0].astype(str).str.cat(others=series[1:], sep="_")
         return concat_series
 
