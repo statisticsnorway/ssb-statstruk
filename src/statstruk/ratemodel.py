@@ -332,7 +332,7 @@ class ratemodel(ssbmodel):
         concatenate the strings for every row in every series.
 
         """
-        series: list[pd.Series[Any]] = [df[col] for col in df]
+        series: list[pd.Series[Any]] = [df[col] for col in df]  # type: ignore[type-arg]
         concat_series = series[0].astype(str).str.cat(others=series[1:], sep="_")
         return concat_series
 
