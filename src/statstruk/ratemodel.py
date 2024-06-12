@@ -105,11 +105,11 @@ class ratemodel(ssbmodel):
             if len(strata_var) == 1:
                 strata_var_new = strata_var[0]
             else:
-                self.sample_data["_stratum"] = self.sample_data[strata_var].apply(
-                    lambda x: "_".join(x.astype(str)), axis=1
+                self.sample_data["_stratum"] = self._fold_dataframe(
+                    df=self.sample_data[strata_var]
                 )
-                self.pop_data["_stratum"] = self.pop_data[strata_var].apply(
-                    lambda x: "_".join(x.astype(str)), axis=1
+                self.pop_data["_stratum"] = self._fold_dataframe(
+                    df=self.pop_data[strata_var]
                 )
                 strata_var_new = "_stratum"
         else:
@@ -323,6 +323,18 @@ class ratemodel(ssbmodel):
                 gbound=gbound,
                 count=count,
             )
+
+    @staticmethod
+    def _fold_dataframe(df: pd.DataFrame) -> pd.Series:  # type: ignore[type-arg]
+        """This function folds all Series in a DataFrame into one Series with concatenated strings.
+
+        For every series in the df, it will convert the rows to strings, and then repeatedly
+        concatenate the strings for every row in every series.
+
+        """
+        series: list[pd.Series] = [df[col] for col in df]  # type: ignore[type-arg]
+        concat_series = series[0].astype(str).str.cat(others=series[1:], sep="_")
+        return concat_series
 
     def _update_strata(
         self, df: pd.DataFrame, exclude: list[str | int]

@@ -58,7 +58,7 @@ def test_statstruk_ratemodel_excludes() -> None:
     )
     assert mod1.get_coeffs["_strata_var_mod"].iloc[2] == "B_surprise_9"
     assert mod1.get_estimates().shape[0] == 5
-    assert mod1.get_weights().estimation_weights[0] == 1
+    assert mod1.get_weights().estimation_weights.iloc[0] == 1
 
 
 def test_statstruk_ratemodel_excludes_missing() -> None:
@@ -272,7 +272,7 @@ def test_statstruk_ratemodel_check_pop0(capfd) -> None:
 
     # check those with x=0 in population are imputed with zero
     imp = mod1.get_imputed()
-    assert imp["job_vacancies_imp"][0] == 0
+    assert imp["job_vacancies_imp"].iloc[0] == 0
 
 
 def test_stastruk_ratemodel_check_allbutone0(capfd) -> None:
@@ -408,4 +408,4 @@ def test_stastruk_ratemodel_negative_variance() -> None:
     res = mod1.get_estimates()
 
     # Check that obs are given na
-    assert res["job_vacancies_CV2"][4] == 0
+    assert res["job_vacancies_CV2"].iloc[4] == 0
