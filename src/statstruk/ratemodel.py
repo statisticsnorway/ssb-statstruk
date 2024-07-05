@@ -172,17 +172,17 @@ class ratemodel(ssbmodel):
             self.sample_data = self._update_strata(self.sample_data, exclude)
 
         # Set up coefficient dictionaries
-        strata_results: dict["str", Any] = {}  # Each stratum as key
-        obs_data: dict["str", Any] = {}  # Each stratum as key
+        strata_results: dict[str, Any] = {}  # Each stratum as key
+        obs_data: dict[str, Any] = {}  # Each stratum as key
 
         # Iterate over each stratum in sample and fit model
         for stratum, group in self.sample_data.groupby("_strata_var_mod"):
-            stratum_info: dict["str", Any] = {
+            stratum_info: dict[str, Any] = {
                 "_strata_var_mod": stratum,
                 "n": len(group),  # Number of observations in the sample
                 "x_sum_sample": group[x_var].sum(),
             }
-            obs_info: dict["str", Any] = {
+            obs_info: dict[str, Any] = {
                 "_strata_var_mod": stratum,
                 self.id_nr: group[self.id_nr].values,
                 "xvar": group[x_var],
