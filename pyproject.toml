@@ -21,6 +21,7 @@ numpy = "2.0.0"
 pandas = "^2.2.0"
 statsmodels = "^0.14.1"
 pandas-stubs = "^2.2.0.240218"
+poetry-plugin-export = "^1.8.0"
 
 [tool.poetry.group.dev.dependencies]
 pygments = ">=2.10.0"
