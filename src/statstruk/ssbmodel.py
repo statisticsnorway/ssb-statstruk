@@ -35,9 +35,8 @@ class ssbmodel:
         )
         self.id_nr = id_nr
         self._check_id_duplicates()
-        
+
         self.verbose = verbose
-        
 
     def __call__(self) -> None:
         """Print model object."""
@@ -104,16 +103,16 @@ class ssbmodel:
                 raise ValueError(
                     f"Variable '{var_name}' contains missing values. Please fix and try again."
                 )
-                
+
     def _check_id_duplicates(self) -> None:
         """Check sample and population data for duplicate ids."""
         duplicate_pop = self.pop_data[self.id_nr].duplicated().any()
         duplicate_sample = self.sample_data[self.id_nr].duplicated().any()
         if duplicate_pop or duplicate_sample:
             raise ValueError(
-           f"Duplicates found in {'pop_data' if duplicate_pop else ''}{' and ' if duplicate_pop and duplicate_sample else ''}{'sample_data' if duplicate_sample else ''} based on {self.id_nr}. Please fix before proceeding."
+                f"Duplicates found in {'pop_data' if duplicate_pop else ''}{' and ' if duplicate_pop and duplicate_sample else ''}{'sample_data' if duplicate_sample else ''} based on {self.id_nr}. Please fix before proceeding."
             )
-            
+
     def _check_model_run(self) -> None:
         """Check to ensure that model has been run before proceeding with other functions."""
         if not hasattr(self, "strata_results"):
