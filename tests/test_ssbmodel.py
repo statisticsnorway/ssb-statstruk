@@ -51,3 +51,14 @@ def test_statruk_ssbmodel_check_Int64() -> None:
     # Check that numeric columns of pandas type Int64 are ok
     s_data.employees = s_data.employees.astype("Int64")
     mod1 = ratemodel(p_data, s_data, id_nr="id")
+
+    
+def test_statstruk_ssbmodel_duplicates() -> None:
+    s_data = pd.read_csv(sample_file)
+    p_data = pd.read_csv(pop_file)
+    s_data.iloc[0,0] = 9
+    
+    with pytest.raises(ValueError) as exc_info:
+        mod1 = ratemodel(p_data, s_data, id_nr="id")
+    assert exc_info.value.args[0] == 'Duplicates found in sample_data based on id. Please fix before proceeding.'
+    
