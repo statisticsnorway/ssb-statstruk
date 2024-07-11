@@ -145,10 +145,8 @@ class ratemodel(ssbmodel):
                 self.id_nr
             ].values.tolist()
             print(f"The following were extreme values and were excluded: {extremes!r}")
-            if exclude is None:
-                exclude = extremes
-            else:
-                exclude = exclude + extremes
+
+            exclude = exclude + extremes
             exclude_auto -= 1
 
             self.fit(
@@ -165,7 +163,7 @@ class ratemodel(ssbmodel):
             )
 
     # Create stratum variables
-    def _create_strata(self, strata_var: str) -> str:
+    def _create_strata(self, strata_var:  str | list[str]) -> str:
         """Function to create a strata variable and fix if missing or a list."""
         # If strata is missing ("") then set up a strataum variable ='1' for all
         if not strata_var:
@@ -174,7 +172,8 @@ class ratemodel(ssbmodel):
 
             strata_var_new: str = "_stratum"
             self.strata_var = "_stratum"
-        # If strata is a list then spaste the variables together as one variable
+        
+        # If strata is a list then paste the variables together as one variable
         elif isinstance(strata_var, list):
             if len(strata_var) == 1:
                 strata_var_new = strata_var[0]
@@ -267,26 +266,27 @@ class ratemodel(ssbmodel):
         assert (
             zeroysum == 0
         ), f"There are observations in your sample where {self.x_var} is zero but {self.y_var} is > 0. This is not allowed in a rate model. Please adjust or remove them."
-
-        # Add to exclude list if doen't fail
+        
+        # Create exclude if missing
+        if exclude is None:
+            exclude = []
+            
+        # Add to exclude list if doesn't fail
         if mask0.sum() > 0:
             print(
                 f'There are {mask0.sum()} observations in the sample with {self.x_var} = 0. These are moved to "surprise strata".'
             )
 
-            if exclude is not None:
-                exclude = exclude + self.sample_data.loc[mask0, self.id_nr].tolist()
-            else:
-                exclude = self.sample_data.loc[mask0, self.id_nr].tolist()
-
+            exclude = exclude + self.sample_data.loc[mask0, self.id_nr].tolist()
+        
         return exclude
 
     def _update_strata(
-        self, df: pd.DataFrame, exclude: list[str | int] | None
+        self, df: pd.DataFrame, exclude: list[str | int]
     ) -> pd.DataFrame:
         """Update files to include a new variable for modelling including suprise strata."""
         # Use the 'loc' method to locate the rows where ID is in the exclude list and update 'strata'
-        if exclude is not None:
+        if len(exclude) > 0:
             mask = df[self.id_nr].isin(exclude)
             df.loc[mask, "_strata_var_mod"] = (
                 df.loc[mask, "_strata_var_mod"]
@@ -498,7 +498,7 @@ class ratemodel(ssbmodel):
 
     def _fit_model_and_controls(
         self,
-        stratum: str,
+        stratum: Any,
         group: pd.DataFrame,
         x_var: str,
         y_var: str,
@@ -591,7 +591,6 @@ class ratemodel(ssbmodel):
                 )
             # Add standard info in for 1 obs strata : check for x-values = 0
             x = group[x_var].values[0]
-            y = group[y_var].values[0]
 
             if x == 0:
                 x = 1  # adjust here so doesn't produce error. beta will still be 0 as y=0
