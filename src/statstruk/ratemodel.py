@@ -163,7 +163,7 @@ class ratemodel(ssbmodel):
             )
 
     # Create stratum variables
-    def _create_strata(self, strata_var:  str | list[str]) -> str:
+    def _create_strata(self, strata_var: str | list[str]) -> str:
         """Function to create a strata variable and fix if missing or a list."""
         # If strata is missing ("") then set up a strataum variable ='1' for all
         if not strata_var:
@@ -172,7 +172,7 @@ class ratemodel(ssbmodel):
 
             strata_var_new: str = "_stratum"
             self.strata_var = "_stratum"
-        
+
         # If strata is a list then paste the variables together as one variable
         elif isinstance(strata_var, list):
             if len(strata_var) == 1:
@@ -266,11 +266,11 @@ class ratemodel(ssbmodel):
         assert (
             zeroysum == 0
         ), f"There are observations in your sample where {self.x_var} is zero but {self.y_var} is > 0. This is not allowed in a rate model. Please adjust or remove them."
-        
+
         # Create exclude if missing
         if exclude is None:
             exclude = []
-            
+
         # Add to exclude list if doesn't fail
         if mask0.sum() > 0:
             print(
@@ -278,7 +278,7 @@ class ratemodel(ssbmodel):
             )
 
             exclude = exclude + self.sample_data.loc[mask0, self.id_nr].tolist()
-        
+
         return exclude
 
     def _update_strata(
