@@ -1,11 +1,8 @@
 # # Code for rate estimation
 # #### To do:
 #
-# - Fix for ulike strata i utvalg og pop
 # - Adjust rerunning for excludes to only rerun specific strata.
 # - Add in option for several y values.
-# - Homogen model option
-# - Regression model option
 
 # +
 
@@ -348,8 +345,9 @@ class ratemodel(ssbmodel):
             + df.loc[mask, self.id_nr].astype(str)
         )
         return df
-
-    def _get_hat(self, X: Any, W: Any) -> Any:
+    
+    @staticmethod
+    def _get_hat(X: Any, W: Any) -> Any:
         """Get the hat matrix for the model."""
         # Compute the square root of the weight matrix, W^(1/2)
         W = np.diag(W)
@@ -363,9 +361,9 @@ class ratemodel(ssbmodel):
 
         # Return diagonal
         return np.diag(H)
-
+    
+    @staticmethod
     def _get_rstud(
-        self,
         y: Any,
         res: Any,
         x_var: str,
@@ -544,6 +542,7 @@ class ratemodel(ssbmodel):
         )
 
         return domain_pd
+    
 
     def _clean_output(
         self,
