@@ -118,8 +118,11 @@ class ssbmodel:
         if not hasattr(self, "strata_results"):
             raise RuntimeError("Model has not been run. Please run fit() first")
 
-    def _convert_var(self, var_name: str, dataset: pd.DataFrame) -> None:
+    @staticmethod
+    def _convert_var(var_name: str, dataset: pd.DataFrame) -> pd.Series:  # type: ignore[type-arg]
+        """Convert variable to int64 or float64 to be able to run model."""
         if dataset[var_name].dtype == "Int64":
             dataset[var_name] = dataset[var_name].astype("int64")
         if dataset[var_name].dtype == "Float64":
             dataset[var_name] = dataset[var_name].astype("float64")
+        return dataset[var_name]
