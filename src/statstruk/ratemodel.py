@@ -104,7 +104,7 @@ class ratemodel(ssbmodel):
         # Set up coefficient dictionaries
         strata_results: dict[str, Any] = {}  # Each stratum as key
         obs_data: dict[str, Any] = {}  # Each stratum as key
-        one_nonzero_strata: list[str] = []
+        one_nonzero_strata: list[Any] = []
 
         # Iterate over each stratum in sample and fit model
         for stratum, group in self.sample_data.groupby("_strata_var_mod"):
@@ -585,7 +585,7 @@ class ratemodel(ssbmodel):
                     )
 
         else:
-            if "surprise" not in stratum:  # type: ignore
+            if "surprise" not in stratum:
                 print(
                     f"Stratum: {stratum!r}, has only one observation and has 0 variance. Consider combing strata."
                 )

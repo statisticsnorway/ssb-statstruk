@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 # Code for importing library and used for working and testing code interactively
 import pandas as pd
 from statstruk import ratemodel
