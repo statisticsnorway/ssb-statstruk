@@ -19,8 +19,8 @@ class ssbmodel:
             id_nr: Name of the variable to identify units in the population and sample
             verbose: Whether to show printed output or not. 1 is minimal output, 2 is more output.
         """
-        self.pop_data = pop_data
-        self.sample_data = sample_data
+        self.pop_data = pop_data.copy()
+        self.sample_data = sample_data.copy()
 
         # Check id variable in population and sample - can be numeric or character
         self._check_variable(
