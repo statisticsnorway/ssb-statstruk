@@ -20,27 +20,26 @@ pop_file = Path(__file__).parent / "data" / "pop_data.csv"
 sample1_file = Path(__file__).parent / "data" / "sample_data_1obs.csv"
 pop1_file = Path(__file__).parent / "data" / "pop_data_1obs.csv"
 
-s_data = pd.read_csv(sample_file)
-p_data = pd.read_csv(pop_file)
-
-# Add country variable
-s_data["country"] = 1
-p_data["country"] = 1
-
 
 def test_statstruk_ratemodel() -> None:
+    s_data = pd.read_csv(sample_file)
+    p_data = pd.read_csv(pop_file)
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(x_var="employees", y_var="job_vacancies", strata_var="industry")
     assert isinstance(mod1.get_coeffs, pd.DataFrame)
 
 
 def test_statstruk_ratemodel_nostrata() -> None:
+    s_data = pd.read_csv(sample_file)
+    p_data = pd.read_csv(pop_file)
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(x_var="employees", y_var="job_vacancies", control_extremes=False)
     assert mod1.get_coeffs.shape[0] == 1
 
 
 def test_statstruk_ratemodel_liststrata() -> None:
+    s_data = pd.read_csv(sample_file)
+    p_data = pd.read_csv(pop_file)
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(
         x_var="employees",
@@ -52,6 +51,8 @@ def test_statstruk_ratemodel_liststrata() -> None:
 
 
 def test_statstruk_ratemodel_excludes() -> None:
+    s_data = pd.read_csv(sample_file)
+    p_data = pd.read_csv(pop_file)
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(
         x_var="employees", y_var="job_vacancies", strata_var="industry", exclude=[5, 9]
@@ -63,6 +64,9 @@ def test_statstruk_ratemodel_excludes() -> None:
 
 def test_statstruk_ratemodel_excludes_missing() -> None:
     """Observation 9855 is missing y-value and is removed. It should therefore be ignored when exclude is specified"""
+    s_data = pd.read_csv(sample_file)
+    p_data = pd.read_csv(pop_file)
+
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(
         x_var="employees",
@@ -75,6 +79,11 @@ def test_statstruk_ratemodel_excludes_missing() -> None:
 
 
 def test_statstruk_ratemodel_get_estimates() -> None:
+    s_data = pd.read_csv(sample_file)
+    p_data = pd.read_csv(pop_file)
+    s_data["country"] = 1
+    p_data["country"] = 1
+
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     with pytest.raises(RuntimeError):
         mod1.get_estimates()
@@ -101,6 +110,8 @@ def test_statstruk_ratemodel_get_estimates() -> None:
 
 
 def test_statstruk_ratemodel_uncertainty_type() -> None:
+    s_data = pd.read_csv(sample_file)
+    p_data = pd.read_csv(pop_file)
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(
         x_var="employees",
@@ -127,6 +138,8 @@ def test_statstruk_ratemodel_uncertainty_type() -> None:
 
 
 def test_statstruk_ratemodel_get_extremes() -> None:
+    s_data = pd.read_csv(sample_file)
+    p_data = pd.read_csv(pop_file)
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     with pytest.raises(RuntimeError):
         mod1.get_extremes()
@@ -153,6 +166,8 @@ def test_statstruk_ratemodel_get_extremes() -> None:
 
 
 def test_statstruk_ratemodel_auto_extremes() -> None:
+    s_data = pd.read_csv(sample_file)
+    p_data = pd.read_csv(pop_file)
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(
         x_var="employees",
@@ -167,6 +182,8 @@ def test_statstruk_ratemodel_auto_extremes() -> None:
 
 
 def test_statstruk_ratemodel_standard() -> None:
+    s_data = pd.read_csv(sample_file)
+    p_data = pd.read_csv(pop_file)
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(x_var="employees", y_var="job_vacancies", strata_var="industry")
     out = mod1.get_estimates(variance_type="standard")
@@ -174,6 +191,8 @@ def test_statstruk_ratemodel_standard() -> None:
 
 
 def test_statstruk_ratemodel_nocontrol() -> None:
+    s_data = pd.read_csv(sample_file)
+    p_data = pd.read_csv(pop_file)
     mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(
         x_var="employees",
@@ -188,10 +207,10 @@ def test_statstruk_ratemodel_nocontrol() -> None:
 
 
 def test_statstruk_ratemodel_1obs(capfd):
-    sample1 = pd.read_csv(sample1_file)
-    pop1 = pd.read_csv(pop1_file)
-    sample1 = sample1.loc[sample1.job_vacancies.notna(),]
-    mod1 = ratemodel(pop1, sample1, id_nr="id")
+    s_data = pd.read_csv(sample1_file)
+    p_data = pd.read_csv(pop1_file)
+    s_data = s_data.loc[s_data.job_vacancies.notna(),]
+    mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(
         x_var="employees",
         y_var="job_vacancies",
@@ -210,13 +229,13 @@ def test_statstruk_ratemodel_1obs(capfd):
 
 
 def test_statstruk_ratemodel_check_neg() -> None:
-    s_data_new = pd.read_csv(sample_file)
+    s_data = pd.read_csv(sample_file)
     p_data = pd.read_csv(pop_file)
-    s_data_new.iloc[0, 1] = -5
+    s_data.iloc[0, 1] = -5
 
     # Check that negetive values raise error
     with pytest.raises(ValueError) as error_mes:
-        mod1 = ratemodel(p_data, s_data_new, id_nr="id")
+        mod1 = ratemodel(p_data, s_data, id_nr="id")
         mod1.fit(
             x_var="employees",
             y_var="job_vacancies",
@@ -230,14 +249,26 @@ def test_statstruk_ratemodel_check_neg() -> None:
 
 
 def test_statstruk_ratemodel_check_sample0(capfd) -> None:
-    s_data_new = pd.read_csv(sample_file)
-    s_data_new = s_data_new.loc[s_data_new.job_vacancies.notna(),]
+    s_data = pd.read_csv(sample_file)
+    s_data = s_data.loc[s_data.job_vacancies.notna(),]
+    p_data = pd.read_csv(pop_file)
 
     # create a x = 0
-    s_data_new.iloc[0, 1] = 0
+    s_data.iloc[0, 1] = 0
 
-    # Check that a message is raised
-    mod1 = ratemodel(p_data, s_data_new, id_nr="id")
+    # Check that fails when y!=0
+    with pytest.raises(AssertionError):
+        mod1 = ratemodel(p_data, s_data, id_nr="id")
+        mod1.fit(
+            x_var="employees",
+            y_var="job_vacancies",
+            strata_var="industry",
+            control_extremes=True,
+        )
+
+    # Check that a message is raised if y=0
+    s_data.iloc[0, 7] = 0
+    mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(
         x_var="employees",
         y_var="job_vacancies",
@@ -251,18 +282,23 @@ def test_statstruk_ratemodel_check_sample0(capfd) -> None:
     # Assert that the captured output matches the expected message
     assert (
         out
-        == "Values of zero detected in stratum 'B'. These observations will not be assessed for extremeness.\n"
+        == 'There are 1 observations in the sample with employees = 0. These are moved to "surprise strata".\n'
     )
+    # Check suprise strata added and beta=0
+    assert mod1.get_coeffs["_strata_var_mod"][1] == "B_surprise_5"
+    assert mod1.get_coeffs["beta"][1] == 0
 
-    # Check values for rstud and G are na
-    assert np.isnan(mod1.get_obs["B"]["G"])[0]
+    # Check beta and imputed values are 0
+    assert mod1.get_imputed().iloc[4, 9] == 0
+    assert mod1.get_imputed().iloc[4, 10] == 0
+    assert np.isnan(mod1.get_obs["B_surprise_5"]["G"])
 
 
 def test_statstruk_ratemodel_check_pop0(capfd) -> None:
-    sample1 = pd.read_csv(sample1_file)
-    pop1 = pd.read_csv(pop1_file)
+    s_data = pd.read_csv(sample1_file)
+    p_data = pd.read_csv(pop1_file)
 
-    mod1 = ratemodel(pop1, sample1, id_nr="id")
+    mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(
         x_var="employees",
         y_var="job_vacancies",
@@ -276,9 +312,9 @@ def test_statstruk_ratemodel_check_pop0(capfd) -> None:
 
 
 def test_stastruk_ratemodel_check_allbutone0(capfd) -> None:
-    sample1 = pd.read_csv(sample1_file)
-    sample1 = sample1.loc[sample1.job_vacancies.notna(),]
-    pop1 = pd.read_csv(pop1_file)
+    s_data = pd.read_csv(sample1_file)
+    s_data = s_data.loc[s_data.job_vacancies.notna(),]
+    p_data = pd.read_csv(pop1_file)
     new_rows = pd.DataFrame(
         {
             "id": [10006, 10007],
@@ -290,7 +326,7 @@ def test_stastruk_ratemodel_check_allbutone0(capfd) -> None:
             "industry": ["G", "G"],
         }
     )
-    pop1 = pd.concat([pop1, new_rows], ignore_index=True)
+    p_data = pd.concat([p_data, new_rows], ignore_index=True)
 
     new_rows2 = pd.DataFrame(
         {
@@ -307,9 +343,9 @@ def test_stastruk_ratemodel_check_allbutone0(capfd) -> None:
             "sick_days_m": [35, 40],
         }
     )
-    sample1 = pd.concat([sample1, new_rows2], ignore_index=True)
+    s_data = pd.concat([s_data, new_rows2], ignore_index=True)
 
-    mod1 = ratemodel(pop1, sample1, id_nr="id")
+    mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(
         x_var="employees",
         y_var="job_vacancies",
@@ -321,9 +357,8 @@ def test_stastruk_ratemodel_check_allbutone0(capfd) -> None:
     out, err = capfd.readouterr()
 
     # Assert that the captured output matches the expected message
-    assert (
-        out
-        == "Only one non-zero value found for 'job_vacancies' in stratum 'G'. Extreme detection can't be performed for the non-zero observation.\n"
+    assert out == (
+        f"Only one non-zero value found for 'job_vacancies' in strata: ['G']. Extreme detection can't be performed for the non-zero observations.\n"
     )
 
     # Check that obs are given na
@@ -331,9 +366,9 @@ def test_stastruk_ratemodel_check_allbutone0(capfd) -> None:
 
 
 def test_stastruk_ratemodel_check_all0(capfd) -> None:
-    sample1 = pd.read_csv(sample1_file)
-    sample1 = sample1.loc[sample1.job_vacancies.notna(),]
-    pop1 = pd.read_csv(pop1_file)
+    s_data = pd.read_csv(sample1_file)
+    s_data = s_data.loc[s_data.job_vacancies.notna(),]
+    p_data = pd.read_csv(pop1_file)
     new_rows = pd.DataFrame(
         {
             "id": [10006, 10007],
@@ -345,7 +380,7 @@ def test_stastruk_ratemodel_check_all0(capfd) -> None:
             "industry": ["G", "G"],
         }
     )
-    pop1 = pd.concat([pop1, new_rows], ignore_index=True)
+    p_data = pd.concat([p_data, new_rows], ignore_index=True)
 
     new_rows2 = pd.DataFrame(
         {
@@ -362,10 +397,10 @@ def test_stastruk_ratemodel_check_all0(capfd) -> None:
             "sick_days_m": [35, 40],
         }
     )
-    sample1 = pd.concat([sample1, new_rows2], ignore_index=True)
-    sample1.loc[sample1.id == 10001, "job_vacancies"] = 0
+    s_data = pd.concat([s_data, new_rows2], ignore_index=True)
+    s_data.loc[s_data.id == 10001, "job_vacancies"] = 0
 
-    mod1 = ratemodel(pop1, sample1, id_nr="id")
+    mod1 = ratemodel(p_data, s_data, id_nr="id")
     mod1.fit(
         x_var="employees",
         y_var="job_vacancies",
@@ -387,18 +422,18 @@ def test_stastruk_ratemodel_check_all0(capfd) -> None:
 
 
 def test_stastruk_ratemodel_negative_variance() -> None:
-    sample1 = pd.read_csv(sample_file)
-    sample1 = sample1.loc[sample1.job_vacancies.notna(),]
-    pop1 = pd.read_csv(pop_file)
+    s_data = pd.read_csv(sample_file)
+    s_data = s_data.loc[s_data.job_vacancies.notna(),]
+    p_data = pd.read_csv(pop_file)
 
     # Create more in sample than population
     sample_ids = [8002, 8017, 8022, 8064, 8070]
     pop_ids = [8002, 8017, 8022]
 
-    sample1 = sample1.loc[(sample1.industry != "F") | (sample1.id.isin(sample_ids))]
-    pop1 = pop1.loc[(pop1.industry != "F") | (pop1.id.isin(pop_ids))]
+    s_data = s_data.loc[(s_data.industry != "F") | (s_data.id.isin(sample_ids))]
+    p_data = p_data.loc[(p_data.industry != "F") | (p_data.id.isin(pop_ids))]
 
-    mod1 = ratemodel(pop1, sample1, id_nr="id", verbose=2)
+    mod1 = ratemodel(p_data, s_data, id_nr="id", verbose=2)
     mod1.fit(
         x_var="employees",
         y_var="job_vacancies",

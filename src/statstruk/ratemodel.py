@@ -1,11 +1,8 @@
 # # Code for rate estimation
 # #### To do:
 #
-# - Fix for ulike strata i utvalg og pop
 # - Adjust rerunning for excludes to only rerun specific strata.
 # - Add in option for several y values.
-# - Homogen model option
-# - Regression model option
 
 # +
 
@@ -68,14 +65,10 @@ class ratemodel(ssbmodel):
         self._check_variable(x_var, self.sample_data, remove_missing=remove_missing)
         self._check_variable(y_var, self.sample_data, remove_missing=remove_missing)
 
-        # Bytte dtype hvis INt64 for x siden det fungere ikke med modellen - quick fix
-        # To DO: swap to funksjon
-        if self.pop_data[x_var].dtype == "Int64":
-            self.pop_data[x_var] = self.pop_data[x_var].astype("int64")
-        if self.sample_data[x_var].dtype == "Int64":
-            self.sample_data[x_var] = self.sample_data[x_var].astype("int64")
-        if self.sample_data[y_var].dtype == "Int64":
-            self.sample_data[y_var] = self.sample_data[y_var].astype("int64")
+        # Bytte dtype hvis Int64 or Float64 to int64 or float64 (siden disse fungere ikke med modellen)
+        self.pop_data[x_var] = self._convert_var(x_var, self.pop_data)
+        self.sample_data[x_var] = self._convert_var(x_var, self.sample_data)
+        self.sample_data[y_var] = self._convert_var(y_var, self.sample_data)
 
         # Check control and exclude_auto
         if (not control_extremes) & (exclude_auto > 0):
@@ -90,17 +83,97 @@ class ratemodel(ssbmodel):
         if (self.verbose == 2) & (exclude_auto == 0):
             print("Fitting final rate model")
 
-        # Define the model formula
-        formula = y_var + "~" + x_var + "- 1"
+        # Set x and y
         self.y_var = y_var
         self.x_var = x_var
 
-        # Create stratum variables
+        # Create strata variable for modelling including 'surprise strata'
+        strata_var_new = self._create_strata(strata_var)
+
+        # Check strata for that they are all represented in sample and population file.
+        # Also check unit level for strata differences in excludes list (not all).
+        self._check_strata(strata_var_new, exclude)
+
+        # Add x=0 units in sample to exclude list and check y=0 for these
+        exclude = self._exclude_zeros(exclude)
+
+        # Update for strata_var_mod to surprise strata for those in exclude list
+        self.pop_data = self._update_strata(self.pop_data, exclude)
+        self.sample_data = self._update_strata(self.sample_data, exclude)
+
+        # Set up coefficient dictionaries
+        strata_results: dict[str, Any] = {}  # Each stratum as key
+        obs_data: dict[str, Any] = {}  # Each stratum as key
+        one_nonzero_strata: list[Any] = []
+
+        # Iterate over each stratum in sample and fit model
+        for stratum, group in self.sample_data.groupby("_strata_var_mod"):
+            stratum_info, obs_info, one_nonzero = self._fit_model_and_controls(
+                stratum, group, x_var, y_var, control_extremes
+            )
+
+            strata_results[stratum] = stratum_info  # type: ignore
+            obs_data[stratum] = obs_info  # type: ignore
+
+            if one_nonzero:
+                one_nonzero_strata.append(stratum)
+
+        # print check for one nonzero
+        if len(one_nonzero_strata) > 0:
+            print(
+                f"Only one non-zero value found for {y_var!r} in strata: {one_nonzero_strata}. Extreme detection can't be performed for the non-zero observations."
+            )
+
+        if self.verbose == 2:
+            print("Finished fitting models. Now summarizing additional data")
+
+        # Loop through population also to get sums
+        for stratum, group in self.pop_data.groupby("_strata_var_mod"):
+            stratum_info = {"N": len(group), "x_sum_pop": group[x_var].sum()}
+            # Condition to see if strata exists. This is for cases where excludes observations are already excluded due to missing data
+            if stratum in strata_results:
+                strata_results[stratum].update(stratum_info)  # type: ignore
+
+        # Set results to instance
+        self.strata_results = strata_results
+        self.obs_data = obs_data
+
+        # Check for outliers and re-run if auto exclude is on
+        if exclude_auto > 0:
+            count = +1
+            extremes = self.get_extremes(rbound=rbound, gbound=gbound)[
+                self.id_nr
+            ].values.tolist()
+            print(f"The following were extreme values and were excluded: {extremes!r}")
+
+            exclude = exclude + extremes
+            exclude_auto -= 1
+
+            self.fit(
+                y_var=y_var,
+                x_var=x_var,
+                strata_var=strata_var,
+                control_extremes=control_extremes,
+                exclude=exclude,
+                exclude_auto=exclude_auto,
+                remove_missing=remove_missing,
+                rbound=rbound,
+                gbound=gbound,
+                count=count,
+            )
+
+    # Create stratum variables
+    def _create_strata(self, strata_var: str | list[str]) -> str:
+        """Function to create a strata variable and fix if missing or a list."""
+        # If strata is missing ("") then set up a strataum variable ='1' for all
         if not strata_var:
             self.sample_data["_stratum"] = "1"
             self.pop_data["_stratum"] = "1"
+
             strata_var_new: str = "_stratum"
             self.strata_var = "_stratum"
+
+        # If strata is a list then paste the variables together as one variable
         elif isinstance(strata_var, list):
             if len(strata_var) == 1:
                 strata_var_new = strata_var[0]
@@ -114,31 +187,38 @@ class ratemodel(ssbmodel):
                 strata_var_new = "_stratum"
         else:
             strata_var_new = strata_var
+
+        # Create new strata variable for modelling in case there are excluded observations
+        self.strata_var = strata_var_new
+        self.pop_data["_strata_var_mod"] = self.pop_data[strata_var_new]
+        self.sample_data["_strata_var_mod"] = self.sample_data[strata_var_new]
+
+        return strata_var_new
+
+    def _check_strata(
+        self, strata_var_new: str, exclude: list[str | int] | None = None
+    ) -> None:
+        """Check strata variable for validity and that all found in sample and pop. Update units that are different if they are own strata."""
         self._check_variable(
             strata_var_new, self.pop_data, data_name="population", check_for_char=True
         )
-        self.strata_var = strata_var_new
 
-        # Check all strata in sample are in population
+        # Check all strata in sample are in population and vice-versa
         unique_strata_pop = self.pop_data[strata_var_new].unique()
         unique_strata_sample = self.sample_data[strata_var_new].unique()
 
-        all_values_present = all(
+        all_values_present_sample = all(
             value in unique_strata_sample for value in unique_strata_pop
         )
-        assert (
-            all_values_present
-        ), "Not all strata in the population were found in the sample data. Please check."
-        all_values_present = all(
+        all_values_present_pop = all(
             value in unique_strata_pop for value in unique_strata_sample
         )
         assert (
-            all_values_present
+            all_values_present_sample
+        ), "Not all strata in the population were found in the sample data. Please check."
+        assert (
+            all_values_present_pop
         ), "Not all strata in the sample were found in the population data. Please check."
-
-        # Create new strata variable for modelling in case there are excluded observations
-        self.pop_data["_strata_var_mod"] = self.pop_data[strata_var_new]
-        self.sample_data["_strata_var_mod"] = self.sample_data[strata_var_new]
 
         # Check strata is same in sample and pop for excluded units and change if necessary
         if exclude is not None:
@@ -167,163 +247,6 @@ class ratemodel(ssbmodel):
                         mask2, "_strata_var_mod_sample"
                     ].values
 
-            # Next update for strata_var_mod to surprise strata
-            self.pop_data = self._update_strata(self.pop_data, exclude)
-            self.sample_data = self._update_strata(self.sample_data, exclude)
-
-        # Set up coefficient dictionaries
-        strata_results: dict[str, Any] = {}  # Each stratum as key
-        obs_data: dict[str, Any] = {}  # Each stratum as key
-
-        # Iterate over each stratum in sample and fit model
-        for stratum, group in self.sample_data.groupby("_strata_var_mod"):
-            stratum_info: dict[str, Any] = {
-                "_strata_var_mod": stratum,
-                "n": len(group),  # Number of observations in the sample
-                "x_sum_sample": group[x_var].sum(),
-            }
-            obs_info: dict[str, Any] = {
-                "_strata_var_mod": stratum,
-                self.id_nr: group[self.id_nr].values,
-                "xvar": group[x_var],
-                "yvar": group[y_var],
-            }
-            if len(group) > 1:  # Ensure there is more than one row to fit a model
-                if self.verbose == 2:
-                    print(f"\nFitting model for Stratum: {stratum!r}")
-
-                # Adjusting weights for zero values in x variable
-                weights = 1.0 / (group[x_var])
-                weights.loc[group[x_var] == 0] = 1.0 / (group[x_var] + 1)
-
-                # Fit the weighted least squares model
-                model = smf.wls(formula, data=group, weights=weights).fit()
-                sigma2 = (1.0 / (len(group) - 1)) * sum(
-                    model.resid.values**2 / group[x_var]
-                )
-
-                # Add into stratum information
-                stratum_info.update(
-                    {
-                        "beta": model.params[x_var].item(),  # Series of coefficients
-                        "sigma2": sigma2,
-                    }
-                )
-
-                # Add in residuals and hat values to observation info
-                hats = self._get_hat(group[[x_var]].values, weights)
-                obs_info.update({"resids": model.resid.values, "hat": hats})
-
-                # Check for x=0 and return message
-                if (any(group[x_var] == 0)) & (control_extremes):
-                    print(
-                        f"Values of zero detected in stratum {stratum!r}. These observations will not be assessed for extremeness."
-                    )
-
-                # Check y for all 0's and return message
-                if (all(group[y_var] == 0)) & (control_extremes):
-                    print(
-                        f"All values for {y_var!r} in stratum {stratum!r} were zero. Extreme values need to be checked in other ways for this stratum."
-                    )
-
-                # Check y for all 0's but one
-                if sum(group[y_var] == 0) == (len(group) - 1):
-                    print(
-                        f"Only one non-zero value found for {y_var!r} in stratum {stratum!r}. Extreme detection can't be performed for the non-zero observation."
-                    )
-
-                # Add in studentized residuals and G values if specified
-                if control_extremes:
-                    if len(group) == 2:
-                        print(
-                            f"Extreme values not able to be detected in stratum: {stratum!r} due to too few observations."
-                        )
-                        obs_info.update(
-                            {"rstud": np.nan, "G": np.nan, "beta_ex": np.nan}
-                        )
-                    else:
-                        rstuds = self._get_rstud(
-                            y=np.array(group[y_var]),
-                            res=model.resid.values,
-                            x_var=x_var,
-                            df=group,
-                            hh=hats,
-                            X=np.array(group[x_var]),
-                            formula=formula,
-                        )
-                        obs_info.update(
-                            {
-                                "rstud": rstuds[0],
-                                "G": rstuds[0] * (np.sqrt(hats / (1.0 - hats))),
-                                "beta_ex": rstuds[1],
-                            }
-                        )
-
-            else:
-                if "surprise" not in stratum:  # type: ignore
-                    print(
-                        f"Stratum: {stratum!r}, has only one observation and has 0 variance. Consider combing strata."
-                    )
-                # Add standard info in for 1 obs strata : check for x-values = 0
-                x = group[x_var].values[0]
-
-                if x == 0:
-                    print(
-                        f"Stratum {stratum!r}, has 1 observation and has a x-value of 0. This is causing a problem with estimates and has been adjusted to 0.01."
-                    )
-                    x = 0.01  ## Not quite right but quick fix for errors. Need to fix properly
-                stratum_info.update(
-                    {
-                        "beta": group[y_var].values[0] / x,
-                        "sigma2": 0,
-                    }
-                )
-                obs_info.update({"resids": [0], "hat": np.nan})
-                if control_extremes:
-                    obs_info.update({"rstud": np.nan, "G": np.nan, "beta_ex": np.nan})
-            strata_results[stratum] = stratum_info  # type: ignore
-            obs_data[stratum] = obs_info  # type: ignore
-
-        if self.verbose == 2:
-            print("Finished fitting models. Now summarizing additional data")
-
-        # Loop through population also
-        for stratum, group in self.pop_data.groupby("_strata_var_mod"):
-            stratum_info = {"N": len(group), "x_sum_pop": group[x_var].sum()}
-            # Condition to see if strata exists. This is for cases where excludes observations are already excluded due to missing data
-            if stratum in strata_results:
-                strata_results[stratum].update(stratum_info)  # type: ignore
-
-        # Set results to instance
-        self.strata_results = strata_results
-        self.obs_data = obs_data
-
-        # Check for outliers and re-run if auto exclude is on
-        if exclude_auto > 0:
-            count = +1
-            extremes = self.get_extremes(rbound=rbound, gbound=gbound)[
-                self.id_nr
-            ].values.tolist()
-            print(f"The following were extreme values and were excluded: {extremes!r}")
-            if exclude is None:
-                exclude = extremes
-            else:
-                exclude = exclude + extremes
-            exclude_auto -= 1
-
-            self.fit(
-                y_var=y_var,
-                x_var=x_var,
-                strata_var=strata_var,
-                control_extremes=control_extremes,
-                exclude=exclude,
-                exclude_auto=exclude_auto,
-                remove_missing=remove_missing,
-                rbound=rbound,
-                gbound=gbound,
-                count=count,
-            )
-
     @staticmethod
     def _fold_dataframe(df: pd.DataFrame) -> pd.Series:  # type: ignore[type-arg]
         """This function folds all Series in a DataFrame into one Series with concatenated strings.
@@ -336,20 +259,44 @@ class ratemodel(ssbmodel):
         concat_series = series[0].astype(str).str.cat(others=series[1:], sep="_")
         return concat_series
 
+    def _exclude_zeros(self, exclude: list[str | int] | None) -> list[str | int]:
+        """Check for observations with x=0 and move to exclude list. Check that all have y_var as 0."""
+        mask0 = self.sample_data[self.x_var] == 0
+        zeroysum = self.sample_data.loc[mask0, self.y_var].sum()
+        assert (
+            zeroysum == 0
+        ), f"There are observations in your sample where {self.x_var} is zero but {self.y_var} is > 0. This is not allowed in a rate model. Please adjust or remove them."
+
+        # Create exclude if missing
+        if exclude is None:
+            exclude = []
+
+        # Add to exclude list if doesn't fail
+        if mask0.sum() > 0:
+            print(
+                f'There are {mask0.sum()} observations in the sample with {self.x_var} = 0. These are moved to "surprise strata".'
+            )
+
+            exclude = exclude + self.sample_data.loc[mask0, self.id_nr].tolist()
+
+        return exclude
+
     def _update_strata(
         self, df: pd.DataFrame, exclude: list[str | int]
     ) -> pd.DataFrame:
         """Update files to include a new variable for modelling including suprise strata."""
         # Use the 'loc' method to locate the rows where ID is in the exclude list and update 'strata'
-        mask = df[self.id_nr].isin(exclude)
-        df.loc[mask, "_strata_var_mod"] = (
-            df.loc[mask, "_strata_var_mod"]
-            + "_surprise_"
-            + df.loc[mask, self.id_nr].astype(str)
-        )
+        if len(exclude) > 0:
+            mask = df[self.id_nr].isin(exclude)
+            df.loc[mask, "_strata_var_mod"] = (
+                df.loc[mask, "_strata_var_mod"]
+                + "_surprise_"
+                + df.loc[mask, self.id_nr].astype(str)
+            )
         return df
 
-    def _get_hat(self, X: Any, W: Any) -> Any:
+    @staticmethod
+    def _get_hat(X: Any, W: Any) -> Any:
         """Get the hat matrix for the model."""
         # Compute the square root of the weight matrix, W^(1/2)
         W = np.diag(W)
@@ -364,8 +311,8 @@ class ratemodel(ssbmodel):
         # Return diagonal
         return np.diag(H)
 
+    @staticmethod
     def _get_rstud(
-        self,
         y: Any,
         res: Any,
         x_var: str,
@@ -382,11 +329,15 @@ class ratemodel(ssbmodel):
         beta_ex_values = np.zeros(n)
         R = np.zeros(n)
 
+        # check for x = 0 observations
+        assert np.all(
+            X != 0
+        ), "Studentized residuals not calculated as some oberservations have x=0."
+
         for i in range(n):
             # Exclude the i-th observation
             df_i = df.drop(index=df.iloc[i].name)
             ww_i = 1.0 / (df_i[x_var])
-            ww_i.loc[df_i[x_var] == 0] = 1.0 / (df_i[x_var] + 1)
             X_i = np.delete(X, i, axis=0)
             y_i = np.delete(y, i, axis=0)
 
@@ -544,6 +495,116 @@ class ratemodel(ssbmodel):
         )
 
         return domain_pd
+
+    def _fit_model_and_controls(
+        self,
+        stratum: Any,
+        group: pd.DataFrame,
+        x_var: str,
+        y_var: str,
+        control_extremes: bool,
+    ) -> tuple[dict[str, Any], dict[str, Any], bool]:
+        """Fit model and return result output and extreme controls."""
+        # Set formula
+        formula = y_var + "~" + x_var + "- 1"
+
+        # Set one non-zero y as blank
+        one_nonzero_strata = False
+
+        # set up dictionaries
+        stratum_info: dict[str, Any] = {
+            "_strata_var_mod": stratum,
+            "n": len(group),  # Number of observations in the sample
+            "x_sum_sample": group[x_var].sum(),
+        }
+        obs_info: dict[str, Any] = {
+            "_strata_var_mod": stratum,
+            self.id_nr: group[self.id_nr].values,
+            "xvar": group[x_var],
+            "yvar": group[y_var],
+        }
+
+        if len(group) > 1:  # Ensure there is more than one row to fit a model
+            if self.verbose == 2:
+                print(f"\nFitting model for Stratum: {stratum!r}")
+
+            # Adjusting weights for zero values in x variable
+            weights = 1.0 / (group[x_var])
+
+            # Fit the weighted least squares model
+            model = smf.wls(formula, data=group, weights=weights).fit()
+            sigma2 = (1.0 / (len(group) - 1)) * sum(
+                model.resid.values**2 / group[x_var]
+            )
+
+            # Add into stratum information
+            stratum_info.update(
+                {
+                    "beta": model.params[x_var].item(),  # Series of coefficients
+                    "sigma2": sigma2,
+                }
+            )
+
+            # Add in residuals and hat values to observation info
+            hats = self._get_hat(group[[x_var]].values, weights)
+            obs_info.update({"resids": model.resid.values, "hat": hats})
+
+            # Check y for all 0's and return message
+            if (all(group[y_var] == 0)) & (control_extremes):
+                print(
+                    f"All values for {y_var!r} in stratum {stratum!r} were zero. Extreme values need to be checked in other ways for this stratum."
+                )
+
+            # Check y for all 0's but one
+            if sum(group[y_var] == 0) == (len(group) - 1):
+                one_nonzero_strata = True
+
+            # Add in studentized residuals and G values if specified
+            if control_extremes:
+                if len(group) == 2:
+                    print(
+                        f"Extreme values not able to be detected in stratum: {stratum!r} due to too few observations."
+                    )
+                    obs_info.update({"rstud": np.nan, "G": np.nan, "beta_ex": np.nan})
+                else:
+                    rstuds = self._get_rstud(
+                        y=np.array(group[y_var]),
+                        res=model.resid.values,
+                        x_var=x_var,
+                        df=group,
+                        hh=hats,
+                        X=np.array(group[x_var]),
+                        formula=formula,
+                    )
+                    obs_info.update(
+                        {
+                            "rstud": rstuds[0],
+                            "G": rstuds[0] * (np.sqrt(hats / (1.0 - hats))),
+                            "beta_ex": rstuds[1],
+                        }
+                    )
+
+        else:
+            if "surprise" not in stratum:
+                print(
+                    f"Stratum: {stratum!r}, has only one observation and has 0 variance. Consider combing strata."
+                )
+            # Add standard info in for 1 obs strata : check for x-values = 0
+            x = group[x_var].values[0]
+
+            if x == 0:
+                x = 1  # adjust here so doesn't produce error. beta will still be 0 as y=0
+            stratum_info.update(
+                {
+                    "beta": group[y_var].values[0] / x,
+                    "sigma2": 0,
+                }
+            )
+            obs_info.update({"resids": [0], "hat": np.nan})
+            if control_extremes:
+                obs_info.update({"rstud": np.nan, "G": np.nan, "beta_ex": np.nan})
+
+        return stratum_info, obs_info, one_nonzero_strata
 
     def _clean_output(
         self,
