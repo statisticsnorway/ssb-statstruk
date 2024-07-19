@@ -3,6 +3,7 @@
 # robust variance implementation
 
 # Import libraries
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -24,22 +25,24 @@ class stratifiedmodel(ssbmodel):
     ) -> None:
         """Initialization of object."""
         super().__init__(pop_data, sample_data, id_nr, verbose)
-        
-    def fit(
+
+    def _fit(
         self,
+        method_function: Callable,
         y_var: str,
-        x_var: str="",
+        x_var: str = "",
         strata_var: str | list[str] = "",
         control_extremes: bool = True,
         exclude: list[str | int] = [],
         remove_missing: bool = True,
         rbound: float = 2,
         gbound: float = 2,
-        method: str = "rate"
+        method: str = "rate",
     ) -> None:
         """Run and fit a rate model within strata.
 
         Args:
+            method_function: Function to use for method.
             y_var: The target variable to estimate from the survey.
             x_var: The variable to use as the explanatory variable in the model.
             strata_var: The stratification variable.
@@ -51,45 +54,37 @@ class stratifiedmodel(ssbmodel):
             method: model method to use
         """
         # Check variables
-        #self._check_variable(x_var, self.pop_data, data_name="population")               # move to ratemodel
-        #self._check_variable(x_var, self.sample_data, remove_missing=remove_missing)    # move to ratemodel
         self._check_variable(y_var, self.sample_data, remove_missing=remove_missing)
 
         # Swap dtype if Int64 or Float64 to int64 or float64 (since these don't work with some of the models
-        #self.pop_data[x_var] = self._convert_var(x_var, self.pop_data)                  # move to ratemodel
-        #self.sample_data[x_var] = self._convert_var(x_var, self.sample_data)            # move to ratemodel
         self.sample_data[y_var] = self._convert_var(y_var, self.sample_data)
-        
+
         # Set variables
         self.y_var = y_var
         self.x_var = x_var
         self.control_extremes = control_extremes
         self.method = method
-        
+
         # Create strata variable for modelling including 'surprise strata'
         strata_var_new = self._create_strata(strata_var)
-        
+
         # Check strata for that they are all represented in sample and population file.
         # Also check unit level for strata differences in excludes list (not all).
         self._check_strata(strata_var_new, exclude)
-        
-        # Add x=0 units in sample to exclude list and check y=0 for these
-        #exclude = self._exclude_zeros(exclude)                                             #ratemodel
-        
+
         # Update for strata_var_mod to surprise strata for those in exclude list
         self.pop_data = self._update_strata(self.pop_data, exclude)
         self.sample_data = self._update_strata(self.sample_data, exclude)
-        
-        
+
         # Set up coefficient dictionaries
         strata_results: dict[str, Any] = {}  # Each stratum as key
         obs_data: dict[str, Any] = {}  # Each stratum as key
-        one_nonzero_strata: list[Any] = []                                                   #ratemodel
-        
+        one_nonzero_strata: list[Any] = []  # ratemodel
+
         # Iterate over each stratum in sample and fit model
         for stratum, group in self.sample_data.groupby("_strata_var_mod"):
             stratum_info, obs_info, one_nonzero = self._fit_model_and_controls(
-                stratum, group
+                stratum, group, method_function
             )
 
             strata_results[stratum] = stratum_info  # type: ignore
@@ -110,10 +105,10 @@ class stratifiedmodel(ssbmodel):
         # Loop through population also to get sums
         for stratum, group in self.pop_data.groupby("_strata_var_mod"):
             stratum_info = {"N": len(group)}
-            
+
             if self.x_var:
-                stratum_info.update({"x_sum_pop": group[x_var].sum()})
-                
+                stratum_info.update({f"{self.x_var}_sum_pop": group[x_var].sum()})
+
             # Condition to see if strata exists. This is for cases where excludes observations are already excluded due to missing data
             if stratum in strata_results:
                 strata_results[stratum].update(stratum_info)  # type: ignore
@@ -121,7 +116,7 @@ class stratifiedmodel(ssbmodel):
         # Set results to instance
         self.strata_results = strata_results
         self.obs_data = obs_data
-    
+
     @property
     def get_coeffs(self) -> pd.DataFrame:
         """Get the model coefficients for each strata."""
@@ -130,9 +125,10 @@ class stratifiedmodel(ssbmodel):
     @property
     def get_obs(self) -> dict[str, Any]:
         """Get the details for observations from the model."""
-        return self.obs_data     
-    
+        return self.obs_data
+
         # Create stratum variables
+
     def _create_strata(self, strata_var: str | list[str]) -> str:
         """Function to create a strata variable and fix if missing or a list."""
         # If strata is missing ("") then set up a strataum variable ='1' for all
@@ -160,14 +156,14 @@ class stratifiedmodel(ssbmodel):
 
         # Create new strata variable for modelling in case there are excluded observations
         self.strata_var = strata_var_new
-        self.pop_data.loc[:,"_strata_var_mod"] = self.pop_data[strata_var_new].copy()
-        self.sample_data.loc[:,"_strata_var_mod"] = self.sample_data[strata_var_new].copy()
+        self.pop_data.loc[:, "_strata_var_mod"] = self.pop_data[strata_var_new].copy()
+        self.sample_data.loc[:, "_strata_var_mod"] = self.sample_data[
+            strata_var_new
+        ].copy()
 
         return strata_var_new
-   
-    def _check_strata(
-        self, strata_var_new: str, exclude: list[str | int]
-    ) -> None:
+
+    def _check_strata(self, strata_var_new: str, exclude: list[str | int]) -> None:
         """Check strata variable for validity and that all found in sample and pop. Update units that are different if they are own strata."""
         self._check_variable(
             strata_var_new, self.pop_data, data_name="population", check_for_char=True
@@ -229,24 +225,6 @@ class stratifiedmodel(ssbmodel):
         concat_series = series[0].astype(str).str.cat(others=series[1:], sep="_")
         return concat_series
 
-    def _exclude_zeros(self, exclude: list[str | int]) -> list[str | int]:
-        """Check for observations with x=0 and move to exclude list. Check that all have y_var as 0."""
-        mask0 = self.sample_data[self.x_var] == 0
-        zeroysum = self.sample_data.loc[mask0, self.y_var].sum()
-        assert (
-            zeroysum == 0
-        ), f"There are observations in your sample where {self.x_var} is zero but {self.y_var} is > 0. This is not allowed in a rate model. Please adjust or remove them."
-
-        # Add to exclude list if doesn't fail
-        if mask0.sum() > 0:
-            print(
-                f'There are {mask0.sum()} observations in the sample with {self.x_var} = 0. These are moved to "surprise strata".'
-            )
-
-            exclude = exclude + self.sample_data.loc[mask0, self.id_nr].tolist()
-
-        return exclude
-
     def _update_strata(
         self, df: pd.DataFrame, exclude: list[str | int]
     ) -> pd.DataFrame:
@@ -287,7 +265,7 @@ class stratifiedmodel(ssbmodel):
         X: Any,
         formula: str,
     ) -> tuple[Any, Any]:
-        """Get the studentized residuals from the model."""
+        """Get the external studentized residuals from the model (exact method)."""
         # set up vectors
         n = len(y)
         y = np.array(y)
@@ -325,14 +303,10 @@ class stratifiedmodel(ssbmodel):
 
         return (R, beta_ex_values)
 
-
     def _fit_model_and_controls(
-        self,
-        stratum: Any,
-        group: pd.DataFrame,
+        self, stratum: Any, group: pd.DataFrame, method_function: Callable
     ) -> tuple[dict[str, Any], dict[str, Any], bool]:
         """Fit model and return result output and extreme controls."""
-
         # Set one non-zero y as blank
         one_nonzero_strata = False
 
@@ -347,20 +321,28 @@ class stratifiedmodel(ssbmodel):
             self.id_nr: group[self.id_nr].values,
             "yvar": group[self.y_var],
         }
-        
+
         if self.method == "rate":
-            #stratum_info.update("x_sum_sample": group[x_var].sum())
+            stratum_info.update({f"{self.x_var}_sum_sample": group[self.x_var].sum()})
             obs_info.update({"xvar": group[self.x_var]})
 
         if len(group) > 1:  # Ensure there is more than one row to fit a model
             if self.verbose == 2:
-                print(f"\nFitting model for Stratum: {stratum!r}")
-                
-            if self.method == "rate":
-                stratum_info, obs_info = self._rate_method(stratum, group, stratum_info, obs_info)
-                
-            elif self.method == "homogen":
-                stratum_info, obs_info = self._homogen_method(stratum, group, stratum_info, obs_info)
+                print(f"Fitting model for Stratum: {stratum!r}")
+
+            stratum_info, obs_info = method_function(
+                stratum, group, stratum_info, obs_info
+            )
+
+            # if self.method == "rate":
+            #    stratum_info, obs_info = self._rate_method(
+            #        stratum, group, stratum_info, obs_info
+            #    )
+
+            # elif self.method == "homogen":
+            #    stratum_info, obs_info = self._homogen_method(
+            #        stratum, group, stratum_info, obs_info
+            #    )
 
             # Check y for all 0's and return message
             if (all(group[self.y_var] == 0)) & (self.control_extremes):
@@ -370,126 +352,47 @@ class stratifiedmodel(ssbmodel):
 
             # Check y for all 0's but one
             if sum(group[self.y_var] == 0) == (len(group) - 1):
-                one_nonzero_strata = True       
+                one_nonzero_strata = True
 
         else:
             if "surprise" not in stratum:
                 print(
                     f"Stratum: {stratum!r}, has only one observation and has 0 variance. Consider combing strata."
                 )
-                
-             # Set x=1 so doesn't produce error. beta will still be 0 for x=0 as y must = 0 for rate model - !!need to check for 
-            if (not x) | (group[self.x_var].values[0] == 0):
-                x = 1 
+            if self.verbose == 2:
+                print(f"Adding in 1 observation stratum: {stratum!r}")
+
+            # Set x=1 so doesn't produce error. beta will still be 0 for x=0 as y must = 0 for rate model - !!need to check for
+            if not self.x_var:
+                x = 1
+            elif group[self.x_var].values[0] == 0:
+                x = 1
             else:
                 # Add standard info in for 1 obs strata : check for x-values = 0
                 x = group[self.x_var].values[0]
-                
+
             stratum_info.update(
                 {
-                    "beta": group[self.y_var].values[0] / x,
+                    f"{self.y_var}_beta": group[self.y_var].values[0] / x,
                     "sigma2": 0,
                 }
             )
             obs_info.update({"resids": [0], "hat": np.nan})
             if self.control_extremes:
-                obs_info.update({"rstud": np.nan, "G": np.nan, "beta_ex": np.nan})
+                obs_info.update(
+                    {"rstud": np.nan, "G": np.nan, f"{self.y_var}_beta_ex": np.nan}
+                )
 
         return stratum_info, obs_info, one_nonzero_strata
-    
-    
-    def _rate_method(self, stratum, group, stratum_info, obs_info):
-        stratum_info.update({"x_sum_sample": group[self.x_var].sum()})
-        formula = self.y_var + "~" + self.x_var + "- 1"
-        
-        # Create weights
-        weights = 1.0 / (group[self.x_var])
 
-        # Fit the weighted least squares model
-        model = smf.wls(formula, data=group, weights=weights).fit()
-        sigma2 = (1.0 / (len(group) - 1)) * sum(
-            model.resid.values**2 / group[self.x_var]
-        )
-
-        # Add into stratum information
-        stratum_info.update(
-            {
-                "beta": model.params[self.x_var].item(),  # Series of coefficients
-                "sigma2": sigma2,
-            }
-        )
-        
-        # Add in residuals and hat values to observation info
-        hats = self._get_hat(group[[self.x_var]].values, weights)
-        obs_info.update({"resids": model.resid.values, "hat": hats})
-        
-        # Add in studentized residuals and G values if specified
-        if self.control_extremes:
-            if len(group) == 2:
-                print(
-                    f"Extreme values not able to be detected in stratum: {stratum!r} due to too few observations."
-                )
-                obs_info.update({"rstud": np.nan, "G": np.nan, "beta_ex": np.nan})
-            else:
-                rstuds = self._get_rstud(
-                    y=np.array(group[self.y_var]),
-                    res=model.resid.values,
-                    x_var=self.x_var,
-                    df=group,
-                    hh=hats,
-                    X=np.array(group[self.x_var]),
-                    formula=formula,
-                )
-                obs_info.update(
-                    {
-                        "rstud": rstuds[0],
-                        "G": rstuds[0] * (np.sqrt(hats / (1.0 - hats))),
-                        "beta_ex": rstuds[1],
-                    }
-                )
-        
-        return stratum_info, obs_info
-        
-        
-        
-    def _homogen_method(self, stratum, group, stratum_info, obs_info):
-        
-        formula = self.y_var + "~ 1"
-        
-        # Fit model
-        model = smf.ols(formula, data=group).fit()
-        sigma2 = model.scale
-        stratum_info.update(
-            {
-                "beta": model.params['Intercept'].item(),
-                "sigma2": sigma2,
-            }
-        )
-        
-        obs_info.update({"resids": model.resid.values})
-        
-        if self.control_extremes:
-            if len(group) == 2:
-                print(
-                    f"Extreme values not able to be detected in stratum: {stratum!r} due to too few observations."
-                )
-                obs_info.update({"rstud": np.nan, "G": np.nan, "beta_ex": np.nan})
-            else:
-                influence = model.get_influence()
-                hats = influence.hat_matrix_diag
-                rstuds = model.get_influence().get_resid_studentized_external()
-                obs_info.update({"resids": model.resid.values, "hat": hats,"rstud": rstuds,  
-                                 "G": rstuds * (np.sqrt(hats / (1.0 - hats))), "beta_ex": np.nan})
-        
-        return stratum_info, obs_info
-    
-    
-    def get_estimates(
+    def _get_estimates(
         self,
+        ai_function: Callable,
         domain: str = "",
         uncertainty_type: str = "CV",
         variance_type: str = "robust",
         return_type: str = "unbiased",
+        output_type: str = "table",
     ) -> pd.DataFrame:
         """Get estimates for previously run model within strata or domains. Variance and CV estimates are returned for each domain.
 
@@ -498,6 +401,8 @@ class stratifiedmodel(ssbmodel):
             uncertainty_type: Which uncertainty measures to return. Choose between 'CV' (default) for coefficient of variation, 'VAR' for variance, 'SE' for standard errors, 'CI' for confidence intervals. Multiple measures can be returned with combinations of these, for example "CV_SE" returns both the coefficient of variation and the standard error.
             variance_type: Choose from 'robust' or 'standard' estimation of variance. Currently only robust estimation is calculated for strata and aggregated strata domains estimation and standard for other domains.
             return_type: String for which robust estimates to return. Choose 'unbiased' to return only the unbiased robust variance estimate or 'all' to return all three.
+            output_type: String for output type to return. Default 'table' returns a table with estimates per strata or domain group. Alternatively choose 'weights' to return the sample file with weights and estimates or 'imputed' to return a population file with mass imputed values and estimates.
+            ai_function: Internal function
 
         Returns:
             A pd.Dataframe is returned conatining estimates and variance/coefficient of variation estimations for each domain.
@@ -506,10 +411,18 @@ class stratifiedmodel(ssbmodel):
         # Check model is run
         self._check_model_run()
 
+        # Check output type
+        assert output_type in [
+            "table",
+            "weights",
+            "imputed",
+        ], "output_type should be 'table', 'weights', or 'imputed'"
+
         # Fetch results
         strata_df = pd.DataFrame(self.strata_results).T
 
         # Add in domain
+        is_aggregate = True
         if not domain:
             domain = self.strata_var
         try:
@@ -521,47 +434,105 @@ class stratifiedmodel(ssbmodel):
                 print(
                     "Domain variable is not an aggregation of strata variables. Only standard variance calculations are available."
                 )
-            assert False, "Standard variance not programmed yet" # temp!!!
-            #return self._get_domain_estimates(domain, uncertainty_type) # Need to check and develop this
+
+            is_aggregate = False
+            variance_type = "standard"
+            strata_df = self._get_domain_estimates(domain, uncertainty_type)
 
         # Format variables
         strata_df["N"] = pd.to_numeric(strata_df["N"])
         strata_df["n"] = pd.to_numeric(strata_df["n"])
-        strata_df["beta"] = pd.to_numeric(strata_df["beta"])
-        
+
         if self.method == "rate":
-            strata_df[f"{self.x_var}_sum_pop"] = pd.to_numeric(strata_df["x_sum_pop"])
-            strata_df[f"{self.x_var}_sum_sample"] = pd.to_numeric(strata_df["x_sum_sample"])
+            strata_df[f"{self.x_var}_sum_pop"] = pd.to_numeric(
+                strata_df[f"{self.x_var}_sum_pop"]
+            )
+            strata_df[f"{self.x_var}_sum_sample"] = pd.to_numeric(
+                strata_df[f"{self.x_var}_sum_sample"]
+            )
             x_pop = strata_df[f"{self.x_var}_sum_pop"]
         elif self.method == "homogen":
             x_pop = strata_df["N"]
 
-        # Add estimates
-        strata_df[f"{self.y_var}_EST"] = pd.to_numeric(
-            strata_df["beta"] * x_pop
+        # Add estimates if aggregate
+        if is_aggregate:
+            strata_df[f"{self.y_var}_beta"] = pd.to_numeric(
+                strata_df[f"{self.y_var}_beta"]
+            )
+            # strata_df.rename(columns={"beta": f"{self.y_var}_beta"}, inplace=True)
+            strata_df[f"{self.y_var}_EST"] = pd.to_numeric(
+                strata_df[f"{self.y_var}_beta"] * x_pop
+            )
+
+            # Add variance
+            strata_df = self._add_variance(
+                strata_df, domain, variance_type, ai_function
+            )
+
+        # Format and add in CV, SE, CI
+        result = self._clean_output(
+            strata_df,
+            uncertainty_type=uncertainty_type,
+            variance_type=variance_type,
+            return_type=return_type,
         )
 
+        if output_type == "table":
+            merged_file = result.copy()
+
+        elif output_type == "weights":
+            sample_file = self.get_weights()
+            merged_file = sample_file.merge(
+                result, left_on=domain, right_on="domain", how="left"
+            )
+            merged_file.drop(columns=["domain"], inplace=True)
+
+        else:  # output_type == 'imputed'
+            imputed_file = self.get_imputed()
+            merged_file = imputed_file.merge(
+                result, left_on=domain, right_on="domain", how="left"
+            )
+            merged_file.drop(columns=["domain"], inplace=True)
+
+        return merged_file
+
+    def _add_variance(
+        self,
+        strata_df: pd.DataFrame,
+        domain: str,
+        variance_type: str,
+        ai_function: Callable,
+    ) -> pd.DataFrame:
+        """Add standard or robust variance to table"""
         # Add variance standard or robust
         if variance_type == "standard":
             var1 = []
             for s in strata_df["_strata_var_mod"]:
                 var1.append(self._get_standard_variance(s))
-                
+
             strata_df[f"{self.y_var}_VAR"] = np.array(var1)
 
             # Aggregate to domain
-            result = (
-                strata_df[[domain, "N", "n", f"{self.y_var}_EST", f"{self.y_var}_VAR"]]
-                .groupby(domain)
-                .sum()
-            )
+            selected_columns = [
+                domain,
+                "N",
+                "n",
+                f"{self.y_var}_EST",
+                f"{self.y_var}_VAR",
+            ]
+            if self.method == "rate":
+                selected_columns = (
+                    selected_columns[:3]
+                    + [f"{self.x_var}_sum_pop", f"{self.x_var}_sum_sample"]
+                    + selected_columns[3:]
+                )
+            result = strata_df[selected_columns].groupby(domain).sum()
         if variance_type == "robust":
-            assert False, "robust not calculated yet" # temp !!
             var1 = []
             var2 = []
             var3 = []
             for s in strata_df["_strata_var_mod"]:
-                var = self._get_robust(s) ### Need to do this !!
+                var = self._get_robust(s, ai_function)
                 if isinstance(var, tuple):
                     var1.append(var[0])
                     var2.append(var[1])
@@ -574,46 +545,109 @@ class stratifiedmodel(ssbmodel):
                 strata_df[f"{self.y_var}_{var_name}"] = data
 
             # Aggregate to domain
-            result = (
-                strata_df[
-                    [
-                        domain,
-                        "N",
-                        "n",
-                        f"{self.x_var}_sum_pop",
-                        f"{self.x_var}_sum_sample",
-                        f"{self.y_var}_EST",
-                        f"{self.y_var}_VAR1",
-                        f"{self.y_var}_VAR2",
-                        f"{self.y_var}_VAR3",
-                    ]
-                ]
-                .groupby(domain)
-                .sum()
-            )
-
-        # Format and add in CV, SE, CI
-        result = self._clean_output(
-            result,
-            uncertainty_type=uncertainty_type,
-            variance_type=variance_type,
-            return_type=return_type,
-        )
+            selected_columns = [
+                domain,
+                "N",
+                "n",
+                f"{self.y_var}_EST",
+                f"{self.y_var}_VAR1",
+                f"{self.y_var}_VAR2",
+                f"{self.y_var}_VAR3",
+            ]
+            if self.method == "rate":
+                selected_columns = (
+                    selected_columns[:3]
+                    + [f"{self.x_var}_sum_pop", f"{self.x_var}_sum_sample"]
+                    + selected_columns[3:]
+                )
+            result = strata_df[selected_columns].groupby(domain).sum()
 
         return result
-    
-        
+
+    def _get_domain_estimates(self, domain: str, uncertainty_type: str) -> pd.DataFrame:
+        """Get domain estimation for case where domains are not an aggregation of strata."""
+        if self.method == "homogen":
+            assert (
+                False
+            ), "Standard variance not programmed yet for homogen model domains"  # temp!!!
+
+        # Collect data
+        self._add_flag()
+        pop = self.get_imputed()  # add imputed y values
+        res = self.strata_results  # get results for sigma2 values
+        strata_var = self.strata_var  # use variable without surprise strata
+
+        # Create domain and strata lists
+        domain_unique = pop[domain].unique().tolist()
+        strata_unique = pop[strata_var].unique().tolist()
+        domain_df = {}
+
+        # loop through domains and calculate variance
+        for d in domain_unique:
+            temp_dom = pop.loc[pop[domain] == d]
+
+            # Get additional domain information on sample, pop sizes and estimates
+            N = temp_dom.shape[0]
+            n = np.sum(temp_dom[self.flag_var] == 1)
+            est = np.sum(temp_dom[f"{self.y_var}_imp"])
+
+            # Loop through strata to get the partial variances
+            var = 0
+            x_sum_sample = 0
+            x_sum_pop = 0
+            for s in strata_unique:
+                mask_s = (temp_dom[strata_var] == s) & (
+                    temp_dom[self.flag_var] == 0
+                )  # Those not in sample
+                Uh_sh = np.sum(
+                    temp_dom.loc[mask_s, self.x_var]
+                )  # Sum of x not in sample
+                xh = res[s][f"{self.x_var}_sum_sample"]  # Sum of x in sample
+                s2 = res[s]["sigma2"]
+                x_sum_pop += np.sum(temp_dom.loc[temp_dom[strata_var] == s, self.x_var])
+                x_sum_sample += np.sum(
+                    temp_dom.loc[
+                        (temp_dom[strata_var] == s) & (temp_dom[self.flag_var] == 1),
+                        self.x_var,
+                    ]
+                )
+
+                # Add in variance for stratum if var is not na or inf
+                if xh == 0:
+                    xh = 1
+                    print(
+                        f"The expanatory variable (x_var) in domain, {d}, summed to zero. This has been adjusted to 1 for variance calculations"
+                    )
+                if (not np.isinf(s2)) & (not np.isnan(s2)):
+                    var += s2 * Uh_sh * ((Uh_sh + xh) / xh)
+
+            # Add calculations to domain dict
+            domain_df[d] = {
+                "domain": d,
+                "N": N,
+                "n": n,
+                f"{self.x_var}_sum_pop": x_sum_pop,
+                f"{self.x_var}_sum_sample": x_sum_sample,
+                f"{self.y_var}_EST": est,
+                f"{self.y_var}_VAR": var,
+            }
+
+        # Convert to pandas
+        domain_pd = pd.DataFrame([v for k, v in domain_df.items()])
+
+        return domain_pd
+
     def _get_standard_variance(self, strata: str) -> Any:
         """Get standard variance estimates."""
         s2 = self.strata_results[strata]["sigma2"]
         if self.method == "rate":
-            x_pop = self.strata_results[strata]["x_sum_pop"]
-            x_utv = self.strata_results[strata]["x_sum_sample"]
+            x_pop = self.strata_results[strata][f"{self.x_var}_sum_pop"]
+            x_utv = self.strata_results[strata][f"{self.x_var}_sum_sample"]
 
         elif self.method == "homogen":
-            x_pop = self.strata_results[strata]["N"] # Here we use counts instead of x
+            x_pop = self.strata_results[strata]["N"]  # Here we use counts instead of x
             x_utv = self.strata_results[strata]["n"]
-            
+
         if (x_pop > 0) and (x_utv > 0):
             V = x_pop**2 * (x_pop - x_utv) / x_pop * s2 / x_utv
         else:
@@ -625,7 +659,7 @@ class stratifiedmodel(ssbmodel):
             V = 0
 
         return V
-    
+
     def _get_domain(self, domain: str) -> Any:
         """Get mapping of domain to the strata results."""
         strata_var = "_strata_var_mod"
@@ -653,8 +687,7 @@ class stratifiedmodel(ssbmodel):
         domain_mapped = strata_res["_strata_var_mod"].map(domain_key)
 
         return domain_mapped.str[0]
-    
-    
+
     def _clean_output(
         self,
         result: pd.DataFrame,
@@ -698,3 +731,142 @@ class stratifiedmodel(ssbmodel):
                 result = result.drop([f"{y_var}_VAR3"], axis=1)
 
         return result
+
+    def _check_extreme_run(self) -> None:
+        """Check to ensure that extreme value requirements were run during fitting."""
+        self._check_model_run()
+
+        is_rstud_present = "rstud" in next(iter(self.obs_data.values()))
+
+        if not is_rstud_present:
+            raise RuntimeError(
+                "Model has not been fitted for calculating extreme values. Please re-run fit() with control_extremes = True"
+            )
+
+    def _get_robust(
+        self, strata: str, ai_function: Callable
+    ) -> tuple[float, float, float]:
+        """Get robust variance estimations."""
+        hi = self.obs_data[strata]["hat"]
+        ei = self.obs_data[strata]["resids"]
+        ai = ai_function(strata)
+        # if self.method == "rate":
+        #    ai = self._get_ai_rate(strata)
+
+        # if self.method == "homogen":
+        #    ai = self._get_ai_homogen(strata)
+
+        if (isinstance(ei, (pd.Series | np.ndarray))) & (
+            isinstance(hi, (pd.Series | np.ndarray))
+        ):
+
+            # Calculate di variations
+            di_1 = ei**2
+            di_2 = ei**2 / (1.0 - hi)
+            di_3 = ei**2 / ((1.0 - hi) ** 2)
+
+            # Caluclate variances
+            V1 = sum(ai**2 * di_1) + sum(di_1) * ai
+            V2 = sum(ai**2 * di_2) + sum(di_2) * ai
+            V3 = sum(ai**2 * di_3) + sum(di_3) * ai
+
+            # Adjust negative variance to zero
+            if any(x < 0 for x in [V1, V2, V3]):
+                if self.verbose == 2:
+                    print(
+                        "Negative variances calculated. These are being adjusted to 0."
+                    )
+                V1 = max(V1, 0)
+                V2 = max(V2, 0)
+                V3 = max(V3, 0)
+
+            return (V1, V2, V3)
+        else:
+            return (0, 0, 0)
+
+    def get_imputed(self) -> pd.DataFrame:
+        """Get population data with imputed values based on model.
+
+        Returns:
+            Pandas data frame with all in population and imputed values
+        """
+        self._check_model_run()
+
+        self._add_flag()
+        pop = self.pop_data
+        utvalg = self.sample_data
+
+        # Map beta values to the population file
+        def _get_values(stratum: str, var: str) -> Any:
+            """Get beta values from model for stratum."""
+            return self.strata_results.get(stratum, {}).get(var, None)
+
+        pop[f"{self.y_var}_beta"] = pop["_strata_var_mod"].apply(
+            _get_values, var=f"{self.y_var}_beta"
+        )
+
+        # Calculate imputed values
+        if self.method == "rate":
+            pop_xvar: int | Any = pop[self.x_var]  # type: ignore[type-arg]
+        if self.method == "homogen":
+            pop_xvar: int | Any = 1  # type: ignore[type-arg]
+
+        pop[f"{self.y_var}_imp"] = pop[f"{self.y_var}_beta"] * pop_xvar
+
+        # Remove beta? This is because it is based on sample x values so appears "wrong" for surprise strata.
+        pop.drop(f"{self.y_var}_beta", axis=1, inplace=True)
+
+        # Link in survey values
+        id_to_yvar_map = utvalg.set_index(self.id_nr)[self.y_var]
+        pop[f"{self.y_var}_imp"] = (
+            pop[self.id_nr].map(id_to_yvar_map).fillna(pop[f"{self.y_var}_imp"])
+        )
+
+        pop_pd = pd.DataFrame(pop)
+        return pop_pd
+
+    def get_weights(self) -> pd.DataFrame:
+        """Get sample data with weights based on model.
+
+        Returns:
+            Pandas data frame with sample data and weights.
+        """
+        self._check_model_run()
+
+        utvalg = self.sample_data
+
+        # function to map population and sample totals to survey data
+        def _get_sums(stratum: str, var: str) -> Any:
+            """Get sums within strata."""
+            sum_value = self.strata_results.get(stratum, {}).get(var, None)
+            return sum_value
+
+        # Apply the function to get x values. Use strata_var_mod to consider surprise strata
+        if self.method == "rate":
+            sample_sum = utvalg["_strata_var_mod"].apply(
+                _get_sums, var=f"{self.x_var}_sum_sample"
+            )
+            pop_sum = utvalg["_strata_var_mod"].apply(
+                _get_sums, var=f"{self.x_var}_sum_pop"
+            )
+
+        # Use n and N instead for homogen
+        if self.method == "homogen":
+            sample_sum = utvalg["_strata_var_mod"].apply(_get_sums, var="n")
+            pop_sum = utvalg["_strata_var_mod"].apply(_get_sums, var="N")
+
+        utvalg["estimation_weights"] = pop_sum / sample_sum
+
+        # Check for obs in suprise strata and set to 1 - should be 1
+        mask = utvalg._strata_var_mod.str.contains("surprise")
+        utvalg.loc[mask, "estimation_weights"] = 1
+
+        return utvalg
+
+    def _add_flag(self) -> None:
+        """Add flag in population data to say if unit is in the sample or not."""
+        self.flag_var: str = f"{self.y_var}_flag_sample"
+        sample_ids = set(self.sample_data[self.id_nr])
+        self.pop_data[self.flag_var] = self.pop_data[self.id_nr].apply(
+            lambda x: 1 if x in sample_ids else 0
+        )

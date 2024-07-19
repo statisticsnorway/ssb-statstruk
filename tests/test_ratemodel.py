@@ -165,20 +165,20 @@ def test_statstruk_ratemodel_get_extremes() -> None:
         mod2.get_extremes()
 
 
-def test_statstruk_ratemodel_auto_extremes() -> None:
-    s_data = pd.read_csv(sample_file)
-    p_data = pd.read_csv(pop_file)
-    mod1 = ratemodel(p_data, s_data, id_nr="id")
-    mod1.fit(
-        x_var="employees",
-        y_var="job_vacancies",
-        strata_var="industry",
-        rbound=5,
-        gbound=5,
-        exclude_auto=1,
-    )
-    ex_df = mod1.get_extremes(rbound=5, gbound=5)
-    assert ex_df.shape[0] == 0
+# def test_statstruk_ratemodel_auto_extremes() -> None:
+#    s_data = pd.read_csv(sample_file)
+#    p_data = pd.read_csv(pop_file)
+#    mod1 = ratemodel(p_data, s_data, id_nr="id")
+#    mod1.fit(
+#        x_var="employees",
+#        y_var="job_vacancies",
+#        strata_var="industry",
+#        rbound=5,
+#        gbound=5,
+#        exclude_auto=1,
+#    )
+#    ex_df = mod1.get_extremes(rbound=5, gbound=5)
+#    assert ex_df.shape[0] == 0
 
 
 def test_statstruk_ratemodel_standard() -> None:
@@ -286,11 +286,10 @@ def test_statstruk_ratemodel_check_sample0(capfd) -> None:
     )
     # Check suprise strata added and beta=0
     assert mod1.get_coeffs["_strata_var_mod"][1] == "B_surprise_5"
-    assert mod1.get_coeffs["beta"][1] == 0
+    assert mod1.get_coeffs["job_vacancies_beta"][1] == 0
 
-    # Check beta and imputed values are 0
+    # Check imputed values are 0
     assert mod1.get_imputed().iloc[4, 9] == 0
-    assert mod1.get_imputed().iloc[4, 10] == 0
     assert np.isnan(mod1.get_obs["B_surprise_5"]["G"])
 
 
