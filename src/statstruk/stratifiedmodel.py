@@ -33,7 +33,7 @@ class stratifiedmodel(ssbmodel):
         x_var: str = "",
         strata_var: str | list[str] = "",
         control_extremes: bool = True,
-        exclude: list[str | int] = [],
+        exclude: list[str | int] | None = None,
         remove_missing: bool = True,
         rbound: float = 2,
         gbound: float = 2,
@@ -163,7 +163,9 @@ class stratifiedmodel(ssbmodel):
 
         return strata_var_new
 
-    def _check_strata(self, strata_var_new: str, exclude: list[str | int]) -> None:
+    def _check_strata(
+        self, strata_var_new: str, exclude: list[str | int] | None
+    ) -> None:
         """Check strata variable for validity and that all found in sample and pop. Update units that are different if they are own strata."""
         self._check_variable(
             strata_var_new, self.pop_data, data_name="population", check_for_char=True
@@ -226,7 +228,7 @@ class stratifiedmodel(ssbmodel):
         return concat_series
 
     def _update_strata(
-        self, df: pd.DataFrame, exclude: list[str | int]
+        self, df: pd.DataFrame, exclude: list[str | int] | None
     ) -> pd.DataFrame:
         """Update files to include a new variable for modelling including suprise strata."""
         # Use the 'loc' method to locate the rows where ID is in the exclude list and update 'strata'
@@ -503,7 +505,7 @@ class stratifiedmodel(ssbmodel):
         variance_type: str,
         ai_function: Callable,
     ) -> pd.DataFrame:
-        """Add standard or robust variance to table"""
+        """Add standard or robust variance to table."""
         # Add variance standard or robust
         if variance_type == "standard":
             var1 = []
@@ -567,9 +569,9 @@ class stratifiedmodel(ssbmodel):
     def _get_domain_estimates(self, domain: str, uncertainty_type: str) -> pd.DataFrame:
         """Get domain estimation for case where domains are not an aggregation of strata."""
         if self.method == "homogen":
-            assert (
-                False
-            ), "Standard variance not programmed yet for homogen model domains"  # temp!!!
+            raise AssertionError(
+                "Standard variance not programmed yet for homogen model domains"
+            )
 
         # Collect data
         self._add_flag()

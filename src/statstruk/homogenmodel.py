@@ -26,7 +26,7 @@ class homogenmodel(stratifiedmodel):
         y_var: str,
         strata_var: str | list[str] = "",
         control_extremes: bool = False,
-        exclude: list[str | int] = [],
+        exclude: list[str | int] | None = None,
         remove_missing: bool = True,
         rbound: float = 2,
         gbound: float = 2,
@@ -58,6 +58,7 @@ class homogenmodel(stratifiedmodel):
             rbound=rbound,
             gbound=gbound,
             method="homogen",
+            method_function=self._homogen_method
         )
 
     def _homogen_method(
@@ -124,7 +125,7 @@ class homogenmodel(stratifiedmodel):
             A pd.Dataframe is returned conatining estimates and variance/coefficient of variation estimations for each domain.
 
         """
-        super()._get_estimates(
+        return super()._get_estimates(
             domain=domain,
             uncertainty_type=uncertainty_type,
             variance_type=variance_type,

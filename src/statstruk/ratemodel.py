@@ -30,7 +30,7 @@ class ratemodel(stratifiedmodel):
         x_var: str,
         strata_var: str | list[str] = "",
         control_extremes: bool = True,
-        exclude: list[str | int] = [],
+        exclude: list[str | int] | None = None,
         remove_missing: bool = True,
         rbound: float = 2,
         gbound: float = 2,
@@ -39,6 +39,7 @@ class ratemodel(stratifiedmodel):
 
         Args:
             y_var: The target variable to estimate from the survey.
+            x_var: The explanatory variable to use in the model.
             strata_var: The stratification variable.
             control_extremes: Whether the model should be fitted in a way that allows for extremes value controls.
             exclude: List of ID numbers for observations to exclude.
@@ -248,12 +249,12 @@ class ratemodel(stratifiedmodel):
 
     @staticmethod
     def _exclude_zeros(
-        exclude: list[str | int],
+        exclude: list[str | int] | None,
         sample_data: pd.DataFrame,
         x_var: str,
         y_var: str,
         id_nr: str,
-    ) -> list[str | int]:
+    ) -> list[str | int] | None:
         """Check for observations with x=0 and move to exclude list. Check that all have y_var as 0."""
         mask0 = sample_data[x_var] == 0
         zeroysum = sample_data.loc[mask0, y_var].sum()
@@ -266,7 +267,8 @@ class ratemodel(stratifiedmodel):
             print(
                 f'There are {mask0.sum()} observations in the sample with {x_var} = 0. These are moved to "surprise strata".'
             )
-
+            if not exclude:
+                exclude = []
             exclude = exclude + sample_data.loc[mask0, id_nr].tolist()
 
         return exclude
