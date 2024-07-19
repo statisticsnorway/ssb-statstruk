@@ -752,11 +752,6 @@ class stratifiedmodel(ssbmodel):
         hi = self.obs_data[strata]["hat"]
         ei = self.obs_data[strata]["resids"]
         ai = ai_function(strata)
-        # if self.method == "rate":
-        #    ai = self._get_ai_rate(strata)
-
-        # if self.method == "homogen":
-        #    ai = self._get_ai_homogen(strata)
 
         if (isinstance(ei, (pd.Series | np.ndarray))) & (
             isinstance(hi, (pd.Series | np.ndarray))
@@ -809,9 +804,9 @@ class stratifiedmodel(ssbmodel):
 
         # Calculate imputed values
         if self.method == "rate":
-            pop_xvar: int | Any = pop[self.x_var]  # type: ignore[type-arg]
+            pop_xvar: int | Any = pop[self.x_var]
         if self.method == "homogen":
-            pop_xvar: int | Any = 1  # type: ignore[type-arg]
+            pop_xvar = 1
 
         pop[f"{self.y_var}_imp"] = pop[f"{self.y_var}_beta"] * pop_xvar
 

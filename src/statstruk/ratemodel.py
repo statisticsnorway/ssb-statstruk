@@ -162,7 +162,7 @@ class ratemodel(stratifiedmodel):
             ai_function=self._get_ai_rate,
         )
 
-    def _get_ai_rate(self, strata: str) -> pd.Series:  # type: ignore[type-arg]
+    def _get_ai_rate(self, strata: str) -> int | float:  # type: ignore[type-arg]
         """Get ai values for robust variance for rate model."""
         # collect data for strata
         x_pop = self.strata_results[strata][f"{self.x_var}_sum_pop"]

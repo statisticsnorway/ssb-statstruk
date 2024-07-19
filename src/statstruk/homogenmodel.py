@@ -58,7 +58,7 @@ class homogenmodel(stratifiedmodel):
             rbound=rbound,
             gbound=gbound,
             method="homogen",
-            method_function=self._homogen_method
+            method_function=self._homogen_method,
         )
 
     def _homogen_method(
@@ -134,7 +134,7 @@ class homogenmodel(stratifiedmodel):
             ai_function=self._get_ai_homogen,
         )
 
-    def _get_ai_homogen(self, strata: str) -> Any:  # type: ignore[type-arg]
+    def _get_ai_homogen(self, strata: str) -> float | int:
         """Get ai values for robust variance for homogen model."""
         n = self.strata_results[strata]["n"]
         Nr = self.strata_results[strata]["N"] - n
