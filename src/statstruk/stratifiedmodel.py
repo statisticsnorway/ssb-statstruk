@@ -3,7 +3,6 @@
 # robust variance implementation
 
 # Import libraries
-from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -28,7 +27,7 @@ class stratifiedmodel(ssbmodel):
 
     def _fit(
         self,
-        method_function: Callable,
+        method_function: Any,
         y_var: str,
         x_var: str = "",
         strata_var: str | list[str] = "",
@@ -306,7 +305,7 @@ class stratifiedmodel(ssbmodel):
         return (R, beta_ex_values)
 
     def _fit_model_and_controls(
-        self, stratum: Any, group: pd.DataFrame, method_function: Callable
+        self, stratum: Any, group: pd.DataFrame, method_function: Any
     ) -> tuple[dict[str, Any], dict[str, Any], bool]:
         """Fit model and return result output and extreme controls."""
         # Set one non-zero y as blank
@@ -389,7 +388,7 @@ class stratifiedmodel(ssbmodel):
 
     def _get_estimates(
         self,
-        ai_function: Callable,
+        ai_function: Any,
         domain: str = "",
         uncertainty_type: str = "CV",
         variance_type: str = "robust",
@@ -503,7 +502,7 @@ class stratifiedmodel(ssbmodel):
         strata_df: pd.DataFrame,
         domain: str,
         variance_type: str,
-        ai_function: Callable,
+        ai_function: Any,
     ) -> pd.DataFrame:
         """Add standard or robust variance to table."""
         # Add variance standard or robust
@@ -746,7 +745,7 @@ class stratifiedmodel(ssbmodel):
             )
 
     def _get_robust(
-        self, strata: str, ai_function: Callable
+        self, strata: str, ai_function: Any
     ) -> tuple[float, float, float]:
         """Get robust variance estimations."""
         hi = self.obs_data[strata]["hat"]
