@@ -744,9 +744,7 @@ class stratifiedmodel(ssbmodel):
                 "Model has not been fitted for calculating extreme values. Please re-run fit() with control_extremes = True"
             )
 
-    def _get_robust(
-        self, strata: str, ai_function: Any
-    ) -> tuple[float, float, float]:
+    def _get_robust(self, strata: str, ai_function: Any) -> tuple[float, float, float]:
         """Get robust variance estimations."""
         hi = self.obs_data[strata]["hat"]
         ei = self.obs_data[strata]["resids"]
