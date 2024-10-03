@@ -5,7 +5,11 @@ The python package **_statstruk_** is designed to make running estimation models
 ## Installation
 The package is on PyPI can be installed in a poetry environment by running the following in a terminal:
 ```bash
-poetry install ssb-statstruk
+poetry add ssb-statstruk
+```
+or 
+```bash
+pip install ssb-statstruk
 ```
 
 ## Import module
@@ -13,6 +17,8 @@ The module can then be imported into a python session/notebook. The main class u
 ```python
 from statstruk import ratemodel
 ```
+
+
 
 ## Data requirements
 The estimation models are design to run using a population data frame and a sample data frame. The **population** data frame should
