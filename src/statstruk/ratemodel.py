@@ -301,14 +301,21 @@ class ratemodel(ssbmodel):
         # Check for outliers and re-run if auto exclude is on
         if exclude_auto > 0:
             count = +1
-            extremes = self.get_extremes(rbound=rbound, gbound=gbound)[
+            extremes: list[Any] | str = self.get_extremes(rbound=rbound, gbound=gbound)[
                 self.id_nr
             ].values.tolist()
+
+            # Check that extremes is a list
+            if isinstance(extremes, str):
+                extremes_list: list[Any] = [extremes]
+            else:
+                extremes_list = extremes
+
             print(f"The following were extreme values and were excluded: {extremes!r}")
             if exclude is None:
-                exclude = extremes
+                exclude = extremes_list
             else:
-                exclude = exclude + extremes
+                exclude = exclude + extremes_list
             exclude_auto -= 1
 
             self.fit(
