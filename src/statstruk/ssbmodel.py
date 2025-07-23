@@ -74,7 +74,6 @@ class ssbmodel:
                 f"Variable '{var_name}' not found in the {data_name} dataset."
             )
 
-        # value: pd.Series[Any] = dataset[var_name]
         value = dataset[var_name]
 
         # If not checking for an ID, verify that the variable is numeric
