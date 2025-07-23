@@ -332,15 +332,18 @@ class ratemodel(ssbmodel):
             )
 
     @staticmethod
-    def _fold_dataframe(df: pd.DataFrame) -> pd.Series:  # type: ignore[type-arg]
+    def _fold_dataframe(df: pd.DataFrame) -> pd.Series:
         """This function folds all Series in a DataFrame into one Series with concatenated strings.
 
         For every series in the df, it will convert the rows to strings, and then repeatedly
         concatenate the strings for every row in every series.
 
         """
-        series: list[pd.Series] = [df[col] for col in df]  # type: ignore[type-arg]
-        concat_series = series[0].astype(str).str.cat(others=series[1:], sep="_")
+        series: list[pd.Series] = [df[col].astype(str) for col in df]
+        if len(series) == 1:
+            return series[0]
+        others_df = pd.concat(series[1:], axis=1)
+        concat_series: pd.Series = series[0].str.cat(others=others_df, sep="_")
         return concat_series
 
     def _update_strata(
@@ -598,15 +601,15 @@ class ratemodel(ssbmodel):
 
     def _get_domain(self, domain: str) -> Any:
         """Get mapping of domain to the strata results."""
-        strata_var = "_strata_var_mod"
+        strata_var: str = "_strata_var_mod"
 
         # create key form population file
         pop = self.pop_data[[strata_var, domain]]
         aggregated = pop.groupby(strata_var)[domain].agg(list)
 
         domain_key = aggregated.to_dict()
-        for strata_var, domain in domain_key.items():
-            domain_key[strata_var] = list(set(domain))
+        for strata_var, domain_values in domain_key.items():
+            domain_key[strata_var] = list(set(domain_values))
 
         # check for 1 to many and return error
         one_to_many = {
@@ -752,7 +755,7 @@ class ratemodel(ssbmodel):
         self._check_extreme_run()
 
         # Collect information from strata results and get_obs
-        extremes = pd.DataFrame()
+        extremes: pd.DataFrame = pd.DataFrame()
         for k in self.get_obs.keys():
             new = pd.DataFrame.from_dict(self.get_obs[k])
             new["beta"] = self.strata_results[k]["beta"]
