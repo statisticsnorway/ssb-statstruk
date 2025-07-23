@@ -18,7 +18,6 @@
 [pypi status]: https://pypi.org/project/ssb-statstruk/
 [documentation]: https://statisticsnorway.github.io/ssb-statstruk
 [tests]: https://github.com/statisticsnorway/ssb-statstruk/actions?workflow=Tests
-
 [sonarcov]: https://sonarcloud.io/summary/overall?id=statisticsnorway_ssb-statstruk
 [sonarquality]: https://sonarcloud.io/summary/overall?id=statisticsnorway_ssb-statstruk
 [pre-commit]: https://github.com/pre-commit/pre-commit
