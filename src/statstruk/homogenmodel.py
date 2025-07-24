@@ -103,5 +103,3 @@ class HomogenModel(StratifiedModel):
         n = self.strata_results[strata]["n"]
         Nr = self.strata_results[strata]["N"] - n
         return Nr / n
-
-

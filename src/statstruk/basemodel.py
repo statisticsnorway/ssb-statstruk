@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 class BaseModel:
     """Class for model estimation."""
 
@@ -115,7 +116,7 @@ class BaseModel:
         """Check to ensure that model has been run before proceeding with other functions."""
         if not hasattr(self, "strata_results"):
             raise RuntimeError("Model has not been run. Please run fit() first")
-            
+
     @staticmethod
     def _convert_var(var_name: str, dataset: pd.DataFrame) -> pd.Series:
         """Convert variable to int64 or float64 to be able to run model."""
