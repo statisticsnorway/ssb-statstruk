@@ -1,7 +1,6 @@
 import pandas as pd
 
-
-class ssbmodel:
+class BaseModel:
     """Class for model estimation."""
 
     def __init__(
@@ -11,7 +10,7 @@ class ssbmodel:
         id_nr: str,
         verbose: int = 1,
     ) -> None:
-        """Initialize general ssbmodel object.
+        """Initialize general base model object.
 
         Args:
             pop_data: Population data with one row per unit (company)
@@ -116,9 +115,12 @@ class ssbmodel:
         """Check to ensure that model has been run before proceeding with other functions."""
         if not hasattr(self, "strata_results"):
             raise RuntimeError("Model has not been run. Please run fit() first")
-
-    def _convert_var(self, var_name: str, dataset: pd.DataFrame) -> None:
+            
+    @staticmethod
+    def _convert_var(var_name: str, dataset: pd.DataFrame) -> pd.Series:
+        """Convert variable to int64 or float64 to be able to run model."""
         if dataset[var_name].dtype == "Int64":
             dataset[var_name] = dataset[var_name].astype("int64")
         if dataset[var_name].dtype == "Float64":
             dataset[var_name] = dataset[var_name].astype("float64")
+        return dataset[var_name]
