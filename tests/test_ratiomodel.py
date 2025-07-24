@@ -237,7 +237,7 @@ def test_statstruk_ratiomodel_check_sample0(capfd) -> None:
     # Assert that the captured output matches the expected message
     assert (
         out
-        == "Values of zero detected in stratum 'B'. These observations will not be assessed for extremeness.\n"
+        == "Zero counts were recorded in the x variable in stratum 'B' and were adjusted to 1 for calculations. Extreme controls will not be done for these observations.\n"
     )
 
     # Check values for rstud and G are na
@@ -309,7 +309,7 @@ def test_stastruk_ratiomodel_check_allbutone0(capfd) -> None:
     # Assert that the captured output matches the expected message
     assert (
         out
-        == "Only one non-zero value found for 'job_vacancies' in stratum 'G'. Extreme detection can't be performed for the non-zero observation.\n"
+        == "Only one non-zero value found for 'job_vacancies' in strata ['G']. Extreme detection can't be performed for the non-zero observations.\n"
     )
 
     # Check that obs are given na

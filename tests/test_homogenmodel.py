@@ -1,4 +1,3 @@
-
 # Tests for homogeneous models
 # mypy: ignore-errors
 
