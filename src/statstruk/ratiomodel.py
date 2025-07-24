@@ -1,7 +1,6 @@
+
 # # Code for estimation using a ration model
 # #### To do:
-#
-# - Fix for ulike strata i utvalg og pop
 # - Adjust rerunning for excludes to only rerun specific strata.
 # - Add in option for several y values.
 
@@ -61,7 +60,7 @@ class RatioModel(StratifiedModel):
         # Convert variable types to ones that are able to be run in modle
         self.pop_data[x_var] = self._convert_var(x_var, self.pop_data)
         self.sample_data[x_var] = self._convert_var(x_var, self.sample_data)
-        
+
         # Fit model
         super()._fit(
             y_var=y_var,
@@ -74,7 +73,7 @@ class RatioModel(StratifiedModel):
             gbound=gbound,
             method="ratio",
             method_function=self._ratio_method,
-            ai_function = self._get_ai_ratio
+            ai_function=self._get_ai_ratio,
         )
 
     def _ratio_method(
@@ -86,15 +85,17 @@ class RatioModel(StratifiedModel):
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         """Ratio model method."""
         formula = self.y_var + "~" + self.x_var + "- 1"
-        
+
         # Create weights
         weights = 1.0 / (group[self.x_var])
 
         # Adjust weights if x=0
         zero_cond = group[self.x_var] == 0
-        if any(zero_cond):
+        if zero_cond.sum() > 0:
             weights.loc[zero_cond] = 1.0 / (group[self.x_var] + 1)
-            print(f"Zero counts were recorded in the x varible in stratum {stratum!r} and were adjusted to 1 for calculations")
+            print(
+                f"Zero counts were recorded in the x variable in stratum {stratum!r} and were adjusted to 1 for calculations. Extreme controls will not be done for these observations."
+            )
 
         # Fit the weighted least squares model
         model = smf.wls(formula, data=group, weights=weights).fit()
@@ -142,10 +143,13 @@ class RatioModel(StratifiedModel):
                         f"{self.y_var}_beta_ex": rstuds[1],
                     }
                 )
+                # if any(np.isnan(rstuds[0])):
+                #    print(
+                #        "There are values of zero in the x variable. Extreme control measure are not calculated for these observations."
+                #    )
 
         return stratum_info, obs_info
 
-        
     def _get_ai_ratio(self, strata: str) -> Any:
         """Get ai values for robust variance for ratio model."""
         # collect data for strata
@@ -162,7 +166,6 @@ class RatioModel(StratifiedModel):
 
         return ai
 
-        
     def get_extremes(
         self, threshold_type: str = "both", rbound: float = 2, gbound: float = 2
     ) -> pd.DataFrame:
@@ -227,7 +230,6 @@ class RatioModel(StratifiedModel):
             ]
         ]
         return extremes_output
-
 
 # For back compatibility
 ratemodel = RatioModel

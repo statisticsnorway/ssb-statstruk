@@ -8,6 +8,7 @@ import statsmodels.formula.api as smf  # type: ignore
 
 from .basemodel import BaseModel
 
+
 class StratifiedModel(BaseModel):
     """Class for estimating statistics for business surveys using a stratified model."""
 
@@ -35,7 +36,7 @@ class StratifiedModel(BaseModel):
         rbound: float = 2,
         gbound: float = 2,
     ) -> None:
-        """ Internal method to run and fit model within strata.
+        """Internal method to run and fit model within strata.
 
         Args:
             method: model method to use (ratio, homogen or reg).
@@ -195,6 +196,7 @@ class StratifiedModel(BaseModel):
                 pop_data_filtered[[self.id_nr, "_strata_var_mod"]],
                 sample_data_filtered[[self.id_nr, "_strata_var_mod"]],
                 on=self.id_nr,
+                how="outer",
                 suffixes=("_pop", "_sample"),
             )
             update_needed = (
@@ -202,15 +204,16 @@ class StratifiedModel(BaseModel):
             )
             if update_needed.sum() > 0:
                 print(
-                    f"Stratum different in sample and population for excluded unit(s): {merged_df.loc[update_needed,self.id_nr].values}. The sample data strata will be used."
+                    f"Stratum different in sample and population for excluded unit(s): {merged_df.loc[update_needed, self.id_nr].values}. The sample data strata will be used."
                 )
                 ids_to_update = merged_df.loc[update_needed, self.id_nr]
                 for i in ids_to_update:
                     mask1 = self.pop_data[self.id_nr] == i
                     mask2 = merged_df[self.id_nr] == i
-                    self.pop_data.loc[mask1, "_strata_var_mod"] = merged_df.loc[
+                    adjusted_value = merged_df.loc[
                         mask2, "_strata_var_mod_sample"
                     ].values
+                    self.pop_data.loc[mask1, "_strata_var_mod"] = adjusted_value
 
     @staticmethod
     def _fold_dataframe(df: pd.DataFrame) -> pd.Series:
@@ -276,9 +279,9 @@ class StratifiedModel(BaseModel):
         R = np.zeros(n)
 
         # check for x = 0 observations
-        assert np.all(
-            X != 0
-        ), "Studentized residuals not calculated as some oberservations have x=0."
+        cond_zero = df[x_var] == 0
+        if any(cond_zero):
+            df.loc[cond_zero, x_var] = 1
 
         for i in range(n):
             # Exclude the i-th observation
@@ -329,7 +332,7 @@ class StratifiedModel(BaseModel):
             obs_info.update({"xvar": group[self.x_var]})
 
         # Ensure there is more than one row to fit a model
-        if len(group) > 1:  
+        if len(group) > 1:
             if self.verbose == 2:
                 print(f"Fitting model for Stratum: {stratum!r}")
 
@@ -360,7 +363,9 @@ class StratifiedModel(BaseModel):
             if not self.x_var:
                 x = 1
             elif group[self.x_var].values[0] == 0:
-                print(f"Stratum {stratum!r} includes only one observation which was zero. This is adjusted to 1 for calculations")
+                print(
+                    f"Stratum {stratum!r} includes only one observation which was zero. This is adjusted to 1 for calculations"
+                )
                 x = 1
             else:
                 # Add standard info in for 1 obs strata : check for x-values = 0
