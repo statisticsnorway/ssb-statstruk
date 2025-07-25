@@ -5,10 +5,10 @@
 # - Check for message for rstud in 2 obs strata
 
 # Import libraries
-from pathlib import Path
-
+import logging
 import numpy as np
 import pandas as pd
+from pathlib import Path
 import pytest
 
 from statstruk import RatioModel
@@ -120,10 +120,10 @@ def test_statstruk_ratiomodel_uncertainty_type() -> None:
         column for column in other_df.columns if column.endswith("_LB")
     ]
     assert len(columns_ending_with_lb) > 0
-    columns_ending_with_CV = [
+    columns_ending_with_cv = [
         column for column in other_df.columns if column.endswith("_CV")
     ]
-    assert len(columns_ending_with_CV) == 0
+    assert len(columns_ending_with_cv) == 0
 
 
 def test_statstruk_ratiomodel_get_extremes() -> None:
@@ -173,26 +173,21 @@ def test_statstruk_ratiomodel_nocontrol() -> None:
         mod1.get_extremes()
 
 
-def test_statstruk_ratiomodel_1obs(capfd):
+def test_statstruk_ratiomodel_1obs(caplog):
     sample1 = pd.read_csv(sample1_file)
     pop1 = pd.read_csv(pop1_file)
-    sample1 = sample1.loc[sample1.job_vacancies.notna(),]
-    mod1 = RatioModel(pop1, sample1, id_nr="id")
-    mod1.fit(
-        x_var="employees",
-        y_var="job_vacancies",
-        strata_var="industry",
-        control_extremes=True,
-    )
+    sample1 = sample1.loc[sample1.job_vacancies.notna(), :]
+    mod1 = RatioModel(pop1, sample1, id_nr="id", logger_level="info")
 
-    # Use capfd to capture the print output
-    out, err = capfd.readouterr()
-
-    # Assert that the captured output matches the expected message
-    assert (
-        out
-        == "Stratum: 'G', has only one observation and has 0 variance. Consider combing strata.\n"
-    )
+    with caplog.at_level(logging.INFO, logger="model"):
+        mod1.fit(
+            x_var="employees",
+            y_var="job_vacancies",
+            strata_var="industry",
+            control_extremes=False,
+        )
+        msg_one = "Stratum: 'G', has only one observation and has 0 variance."
+        assert msg_one in caplog.text
 
 
 def test_statstruk_ratiomodel_check_neg() -> None:
@@ -215,36 +210,31 @@ def test_statstruk_ratiomodel_check_neg() -> None:
     )
 
 
-def test_statstruk_ratiomodel_check_sample0(capfd) -> None:
+def test_statstruk_ratiomodel_check_sample0(caplog) -> None:
     s_data_new = pd.read_csv(sample_file)
-    s_data_new = s_data_new.loc[s_data_new.job_vacancies.notna(),]
+    s_data_new = s_data_new.loc[s_data_new.job_vacancies.notna(), :]
 
     # create a x = 0
     s_data_new.iloc[0, 1] = 0
 
     # Check that a message is raised
-    mod1 = RatioModel(p_data, s_data_new, id_nr="id")
-    mod1.fit(
-        x_var="employees",
-        y_var="job_vacancies",
-        strata_var="industry",
-        control_extremes=True,
-    )
+    mod1 = RatioModel(p_data, s_data_new, id_nr="id", logger_level="info")
 
-    # Use capfd to capture the print output
-    out, err = capfd.readouterr()
-
-    # Assert that the captured output matches the expected message
-    assert (
-        out
-        == "Zero counts were recorded in the x variable in stratum 'B' and were adjusted to 1 for calculations. Extreme controls will not be done for these observations.\n"
-    )
+    with caplog.at_level(logging.INFO, logger="model"):
+        mod1.fit(
+            x_var="employees",
+            y_var="job_vacancies",
+            strata_var="industry",
+            control_extremes=True,
+        )
+        msg = "Zero counts were recorded in the x variable in stratum 'B' and were adjusted to 1 for calculations. Extreme controls will not be done for these observations.\n"
+        assert msg in caplog.text
 
     # Check values for rstud and G are na
     assert np.isnan(mod1.get_obs["B"]["G"])[0]
 
 
-def test_statstruk_ratiomodel_check_pop0(capfd) -> None:
+def test_statstruk_ratiomodel_check_pop0() -> None:
     sample1 = pd.read_csv(sample1_file)
     pop1 = pd.read_csv(pop1_file)
 
@@ -261,9 +251,9 @@ def test_statstruk_ratiomodel_check_pop0(capfd) -> None:
     assert imp["job_vacancies_imp"].iloc[0] == 0
 
 
-def test_stastruk_ratiomodel_check_allbutone0(capfd) -> None:
+def test_stastruk_ratiomodel_check_allbutone0(caplog) -> None:
     sample1 = pd.read_csv(sample1_file)
-    sample1 = sample1.loc[sample1.job_vacancies.notna(),]
+    sample1 = sample1.loc[sample1.job_vacancies.notna(), :]
     pop1 = pd.read_csv(pop1_file)
     new_rows = pd.DataFrame(
         {
@@ -295,30 +285,25 @@ def test_stastruk_ratiomodel_check_allbutone0(capfd) -> None:
     )
     sample1 = pd.concat([sample1, new_rows2], ignore_index=True)
 
-    mod1 = RatioModel(pop1, sample1, id_nr="id")
-    mod1.fit(
-        x_var="employees",
-        y_var="job_vacancies",
-        strata_var="industry",
-        control_extremes=True,
-    )
+    mod1 = RatioModel(pop1, sample1, id_nr="id", logger_level="warning")
 
-    # Use capfd to capture the print output
-    out, err = capfd.readouterr()
-
-    # Assert that the captured output matches the expected message
-    assert (
-        out
-        == "Only one non-zero value found for 'job_vacancies' in strata ['G']. Extreme detection can't be performed for the non-zero observations.\n"
-    )
+    with caplog.at_level(logging.WARNING, logger="model"):
+        mod1.fit(
+            x_var="employees",
+            y_var="job_vacancies",
+            strata_var="industry",
+            control_extremes=True,
+        )
+        msg_log = "Only one non-zero value found for 'job_vacancies' in strata: ['G']."
+        assert msg_log in caplog.text
 
     # Check that obs are given na
     assert np.isnan(mod1.get_obs["G"]["G"])[0]
 
 
-def test_stastruk_ratiomodel_check_all0(capfd) -> None:
+def test_stastruk_ratiomodel_check_all0(caplog) -> None:
     sample1 = pd.read_csv(sample1_file)
-    sample1 = sample1.loc[sample1.job_vacancies.notna(),]
+    sample1 = sample1.loc[sample1.job_vacancies.notna(), :]
     pop1 = pd.read_csv(pop1_file)
     new_rows = pd.DataFrame(
         {
@@ -351,22 +336,17 @@ def test_stastruk_ratiomodel_check_all0(capfd) -> None:
     sample1 = pd.concat([sample1, new_rows2], ignore_index=True)
     sample1.loc[sample1.id == 10001, "job_vacancies"] = 0
 
-    mod1 = RatioModel(pop1, sample1, id_nr="id")
-    mod1.fit(
-        x_var="employees",
-        y_var="job_vacancies",
-        strata_var="industry",
-        control_extremes=True,
-    )
+    mod1 = RatioModel(pop1, sample1, id_nr="id", logger_level="info")
 
-    # Use capfd to capture the print output
-    out, err = capfd.readouterr()
-
-    # Assert that the captured output matches the expected message
-    assert (
-        out
-        == "All values for 'job_vacancies' in stratum 'G' were zero. Extreme values need to be checked in other ways for this stratum.\n"
-    )
+    with caplog.at_level(logging.INFO, logger="model"):
+        mod1.fit(
+            x_var="employees",
+            y_var="job_vacancies",
+            strata_var="industry",
+            control_extremes=True,
+        )
+        msg_ex = "All values for 'job_vacancies' in stratum 'G' were zero. Extreme values need to be checked in other ways for this stratum."
+        assert msg_ex in caplog.text
 
     # Check that obs are given na
     assert all(np.isnan(mod1.get_obs["G"]["G"]))
@@ -374,7 +354,7 @@ def test_stastruk_ratiomodel_check_all0(capfd) -> None:
 
 def test_stastruk_ratiomodel_negative_variance() -> None:
     sample1 = pd.read_csv(sample_file)
-    sample1 = sample1.loc[sample1.job_vacancies.notna(),]
+    sample1 = sample1.loc[sample1.job_vacancies.notna(), :]
     pop1 = pd.read_csv(pop_file)
 
     # Create more in sample than population

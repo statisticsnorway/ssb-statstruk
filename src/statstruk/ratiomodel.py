@@ -1,4 +1,3 @@
-
 # # Code for estimation using a ration model
 # #### To do:
 # - Adjust rerunning for excludes to only rerun specific strata.
@@ -19,16 +18,6 @@ from .stratifiedmodel import StratifiedModel
 class RatioModel(StratifiedModel):
     """Class for estimating statistics for business surveys using a ratio model."""
 
-    def __init__(
-        self,
-        pop_data: pd.DataFrame,
-        sample_data: pd.DataFrame,
-        id_nr: str,
-        verbose: int = 1,
-    ) -> None:
-        """Initialization of ratio model object."""
-        super().__init__(pop_data, sample_data, id_nr, verbose)
-
     def fit(
         self,
         y_var: str,
@@ -37,8 +26,6 @@ class RatioModel(StratifiedModel):
         control_extremes: bool = True,
         exclude: list[str | int] | None = None,
         remove_missing: bool = True,
-        rbound: float = 2,
-        gbound: float = 2,
     ) -> None:
         """Run and fit a ratio model within strata.
 
@@ -49,8 +36,6 @@ class RatioModel(StratifiedModel):
             control_extremes: Whether the model should be fitted in a way that allows for extremes value controls.
             exclude: List of ID numbers for observations to exclude.
             remove_missing: Whether to automatically remove units in the sample that are missing x or y values.
-            rbound: Multiplicative value to determine the extremity of the studentized residual values.
-            gbound: Multiplicative value to determine the extremity of the G values.
         """
         # Check variables
         self._check_variable(x_var, self.pop_data, data_name="population")
@@ -69,8 +54,6 @@ class RatioModel(StratifiedModel):
             control_extremes=control_extremes,
             exclude=exclude,
             remove_missing=remove_missing,
-            rbound=rbound,
-            gbound=gbound,
             method="ratio",
             method_function=self._ratio_method,
             ai_function=self._get_ai_ratio,
@@ -93,9 +76,8 @@ class RatioModel(StratifiedModel):
         zero_cond = group[self.x_var] == 0
         if zero_cond.sum() > 0:
             weights.loc[zero_cond] = 1.0 / (group[self.x_var] + 1)
-            print(
-                f"Zero counts were recorded in the x variable in stratum {stratum!r} and were adjusted to 1 for calculations. Extreme controls will not be done for these observations."
-            )
+            mes_zero = f"Zero counts were recorded in the x variable in stratum {stratum!r} and were adjusted to 1 for calculations. Extreme controls will not be done for these observations."
+            self.logger.info(mes_zero)
 
         # Fit the weighted least squares model
         model = smf.wls(formula, data=group, weights=weights).fit()
@@ -120,7 +102,7 @@ class RatioModel(StratifiedModel):
         # Add in studentized residuals and G values if specified
         if self.control_extremes:
             if len(group) == 2:
-                print(
+                self.logger.info(
                     f"Extreme values not able to be detected in stratum: {stratum!r} due to too few observations."
                 )
                 obs_info.update(
@@ -133,7 +115,7 @@ class RatioModel(StratifiedModel):
                     x_var=self.x_var,
                     df=group,
                     hh=hats,
-                    X=np.array(group[self.x_var]),
+                    x=np.array(group[self.x_var]),
                     formula=formula,
                 )
                 obs_info.update(
@@ -143,10 +125,6 @@ class RatioModel(StratifiedModel):
                         f"{self.y_var}_beta_ex": rstuds[1],
                     }
                 )
-                # if any(np.isnan(rstuds[0])):
-                #    print(
-                #        "There are values of zero in the x variable. Extreme control measure are not calculated for these observations."
-                #    )
 
         return stratum_info, obs_info
 
@@ -161,8 +139,8 @@ class RatioModel(StratifiedModel):
             ai = 0
         # Calculate ai
         else:
-            Xr = x_pop - x_utv
-            ai = Xr / x_utv
+            xr = x_pop - x_utv
+            ai = xr / x_utv
 
         return ai
 
@@ -230,6 +208,7 @@ class RatioModel(StratifiedModel):
             ]
         ]
         return extremes_output
+
 
 # For back compatibility
 ratemodel = RatioModel

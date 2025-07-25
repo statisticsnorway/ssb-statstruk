@@ -1,19 +1,3 @@
-# ---
-# jupyter:
-#   jupytext:
-#     formats: py:percent
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.17.2
-#   kernelspec:
-#     display_name: Python 3 (ipykernel)
-#     language: python
-#     name: python3
-# ---
-
-# %%
 # Homogen model class
 
 from typing import Any
@@ -26,16 +10,6 @@ from .stratifiedmodel import StratifiedModel
 
 class HomogenModel(StratifiedModel):
     """Class for estimating statistics for business surveys using a homogeneous model."""
-
-    def __init__(
-        self,
-        pop_data: pd.DataFrame,
-        sample_data: pd.DataFrame,
-        id_nr: str,
-        verbose: int = 1,
-    ) -> None:
-        """Initialization of object."""
-        super().__init__(pop_data, sample_data, id_nr, verbose)
 
     def fit(
         self,
@@ -60,8 +34,6 @@ class HomogenModel(StratifiedModel):
             control_extremes=False,
             exclude=exclude,
             remove_missing=remove_missing,
-            rbound=2,
-            gbound=2,
             method="homogen",
             method_function=self._homogen_method,
             ai_function=self._get_ai_homogen,
@@ -101,5 +73,5 @@ class HomogenModel(StratifiedModel):
     def _get_ai_homogen(self, strata: str) -> Any:
         """Get ai values for robust variance for homogen model."""
         n = self.strata_results[strata]["n"]
-        Nr = self.strata_results[strata]["N"] - n
-        return Nr / n
+        nr = self.strata_results[strata]["N"] - n
+        return nr / n
