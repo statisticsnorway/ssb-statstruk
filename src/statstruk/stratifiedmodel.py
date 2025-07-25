@@ -12,16 +12,6 @@ from .basemodel import BaseModel
 class StratifiedModel(BaseModel):
     """Class for estimating statistics for business surveys using a stratified model."""
 
-    def __init__(
-        self,
-        pop_data: pd.DataFrame,
-        sample_data: pd.DataFrame,
-        id_nr: str,
-        verbose: int = 1,
-    ) -> None:
-        """Initialization of object."""
-        super().__init__(pop_data, sample_data, id_nr, verbose)
-
     def _fit(
         self,
         method: str,
@@ -33,8 +23,6 @@ class StratifiedModel(BaseModel):
         control_extremes: bool = True,
         exclude: list[str | int] | None = None,
         remove_missing: bool = True,
-        rbound: float = 2,
-        gbound: float = 2,
     ) -> None:
         """Internal method to run and fit model within strata.
 
@@ -48,8 +36,6 @@ class StratifiedModel(BaseModel):
             control_extremes: Whether the model should be fitted in a way that allows for extremes value controls.
             exclude: List of ID numbers for observations to exclude.
             remove_missing: Whether to automatically remove units in the sample that are missing x or y values.
-            rbound: Multiplicative value to determine the extremity of the studentized residual values.
-            gbound: Multiplicative value to determine the extremity of the G values.
         """
         # Check variables
         self._check_variable(y_var, self.sample_data, remove_missing=remove_missing)
@@ -92,14 +78,14 @@ class StratifiedModel(BaseModel):
             if one_nonzero:
                 one_nonzero_strata.append(stratum)
 
+            self.logger.debug(f"Finished fitting stratum: {stratum}")
+
         # print check for one nonzero
         if (len(one_nonzero_strata) > 0) & (method == "ratio") & (control_extremes):
-            print(
-                f"Only one non-zero value found for {self.y_var!r} in strata: {one_nonzero_strata}. Extreme detection can't be performed for the non-zero observations."
-            )
+            mes_one = f"Only one non-zero value found for {self.y_var!r} in strata: {one_nonzero_strata}. Extreme detection can't be performed for the non-zero observations."
+            self.logger.warning(mes_one)
 
-        if self.verbose == 2:
-            print("Finished fitting models. Now summarizing additional data")
+        self.logger.info("Finished fitting models. Now summarizing additional data")
 
         # Loop through population also to get sums
         for stratum, group in self.pop_data.groupby("_strata_var_mod"):
@@ -193,8 +179,8 @@ class StratifiedModel(BaseModel):
             ]
             pop_data_filtered = self.pop_data[self.pop_data[self.id_nr].isin(exclude)]
             merged_df = pd.merge(
-                pop_data_filtered[[self.id_nr, "_strata_var_mod"]],
-                sample_data_filtered[[self.id_nr, "_strata_var_mod"]],
+                left=pop_data_filtered[[self.id_nr, "_strata_var_mod"]],
+                right=sample_data_filtered[[self.id_nr, "_strata_var_mod"]],
                 on=self.id_nr,
                 how="outer",
                 suffixes=("_pop", "_sample"),
@@ -203,7 +189,7 @@ class StratifiedModel(BaseModel):
                 merged_df["_strata_var_mod_sample"] != merged_df["_strata_var_mod_pop"]
             )
             if update_needed.sum() > 0:
-                print(
+                self.logger.info(
                     f"Stratum different in sample and population for excluded unit(s): {merged_df.loc[update_needed, self.id_nr].values}. The sample data strata will be used."
                 )
                 ids_to_update = merged_df.loc[update_needed, self.id_nr]
@@ -245,20 +231,20 @@ class StratifiedModel(BaseModel):
         return df
 
     @staticmethod
-    def _get_hat(X: Any, W: Any) -> Any:
+    def _get_hat(x: Any, w: Any) -> Any:
         """Get the hat matrix for the model."""
-        # Compute the square root of the weight matrix, W^(1/2)
-        W = np.diag(W)
-        W_sqrt = np.sqrt(W)
+        # Compute the square root of the weight matrix, w^(1/2)
+        w = np.diag(w)
+        w_sqrt = np.sqrt(w)
 
         # Compute (X^T * W * X)^(-1)
-        XTWX_inv = np.linalg.inv(X.T @ W @ X)
+        xtwx_inv = np.linalg.inv(x.T @ w @ x)
 
         # Compute the hat matrix
-        H = W_sqrt @ X @ XTWX_inv @ X.T @ W_sqrt
+        h = w_sqrt @ x @ xtwx_inv @ x.T @ w_sqrt
 
         # Return diagonal
-        return np.diag(H)
+        return np.diag(h)
 
     @staticmethod
     def _get_rstud(
@@ -267,14 +253,14 @@ class StratifiedModel(BaseModel):
         x_var: str,
         df: pd.DataFrame,
         hh: Any,
-        X: Any,
+        x: Any,
         formula: str,
     ) -> tuple[Any, Any]:
         """Get the external studentized residuals from the model (exact method)."""
         # set up vectors
         n = len(y)
         y = np.array(y)
-        X = np.array(X)
+        x = np.array(x)
         beta_ex_values = np.zeros(n)
         R = np.zeros(n)
 
@@ -287,7 +273,7 @@ class StratifiedModel(BaseModel):
             # Exclude the i-th observation
             df_i = df.drop(index=df.iloc[i].name)
             ww_i = 1.0 / (df_i[x_var])
-            X_i = np.delete(X, i, axis=0)
+            x_i = np.delete(x, i, axis=0)
             y_i = np.delete(y, i, axis=0)
 
             # Fit the WLS model without the i-th observation
@@ -298,11 +284,11 @@ class StratifiedModel(BaseModel):
             y_hat_j = model_i.predict(df_i)
 
             # Calculate sigma
-            sigma2 = sum((y_i - y_hat_j) ** 2 / X_i) * 1.0 / (n - 2)
+            sigma2 = sum((y_i - y_hat_j) ** 2 / x_i) * 1.0 / (n - 2)
 
             # Calculate and save studentized residuals
-            if (X[i] > 0) & (sigma2 > 0):
-                R[i] = res[i] / (np.sqrt(sigma2 * X[i]) * np.sqrt(1.0 - hh[i]))
+            if (x[i] > 0) & (sigma2 > 0):
+                R[i] = res[i] / (np.sqrt(sigma2 * x[i]) * np.sqrt(1.0 - hh[i]))
             else:
                 R[i] = np.nan
 
@@ -333,8 +319,7 @@ class StratifiedModel(BaseModel):
 
         # Ensure there is more than one row to fit a model
         if len(group) > 1:
-            if self.verbose == 2:
-                print(f"Fitting model for Stratum: {stratum!r}")
+            self.logger.info(msg="Fitting model for Stratum: {stratum!r}")
 
             stratum_info, obs_info = method_function(
                 stratum, group, stratum_info, obs_info
@@ -342,9 +327,8 @@ class StratifiedModel(BaseModel):
 
             # Check y for all 0's and return message
             if (all(group[self.y_var] == 0)) & (self.control_extremes):
-                print(
-                    f"All values for {self.y_var!r} in stratum {stratum!r} were zero. Extreme values need to be checked in other ways for this stratum."
-                )
+                mes_zero = f"All values for {self.y_var!r} in stratum {stratum!r} were zero. Extreme values need to be checked in other ways for this stratum."
+                self.logger.warning(msg=mes_zero)
 
             # Check y for all 0's but one
             if sum(group[self.y_var] == 0) == (len(group) - 1):
@@ -352,19 +336,18 @@ class StratifiedModel(BaseModel):
 
         else:
             if "surprise" not in stratum:
-                print(
-                    f"Stratum: {stratum!r}, has only one observation and has 0 variance. Consider combing strata."
-                )
-            if self.verbose == 2:
-                print(f"Adding in 1 observation stratum: {stratum!r}")
+                msg_one = f"Stratum: {stratum!r}, has only one observation and has 0 variance. Consider combining strata."
+                self.logger.info(msg_one)
+
+            self.logger.info(msg=f"Adding in 1 observation stratum: {stratum!r}")
 
             # Some of the following is only relevant for ratio models
             # Set x=1 so doesn't produce error. beta will still be 0 for x=0 as y must = 0 for ratio model - !!need to check for
             if not self.x_var:
                 x = 1
             elif group[self.x_var].values[0] == 0:
-                print(
-                    f"Stratum {stratum!r} includes only one observation which was zero. This is adjusted to 1 for calculations"
+                self.logger.warning(
+                    msg=f"Stratum {stratum!r} includes only one observation which was zero. This is adjusted to 1 for calculations"
                 )
                 x = 1
             else:
@@ -429,10 +412,8 @@ class StratifiedModel(BaseModel):
         # If domains are not aggregates of strata run alternative calculation for variance (not robust)
         except AssertionError:
             if variance_type == "robust":
-                print(
-                    "Domain variable is not an aggregation of strata variables. Only standard variance calculations are available."
-                )
-
+                mes_rob = "Domain variable is not an aggregation of strata variables. Only standard variance calculations will be calculated."
+                self.logger.info(msg=mes_rob)
             is_aggregate = False
             variance_type = "standard"
             strata_df = self._get_domain_estimates(domain, uncertainty_type)
@@ -565,9 +546,9 @@ class StratifiedModel(BaseModel):
     def _get_domain_estimates(self, domain: str, uncertainty_type: str) -> pd.DataFrame:
         """Get domain estimation for case where domains are not an aggregation of strata."""
         if self.method == "homogen":
-            raise AssertionError(
-                "Standard variance not programmed yet for homogen model domains"
-            )
+            mes_var = "Standard variance not programmed yet for homogen model domains"
+            self.logger.error(mes_var)
+            raise AssertionError(mes_var)
 
         # Collect data
         self._add_flag()
@@ -597,7 +578,7 @@ class StratifiedModel(BaseModel):
                 mask_s = (temp_dom[strata_var] == s) & (
                     temp_dom[self.flag_var] == 0
                 )  # Those not in sample
-                Uh_sh = np.sum(
+                uh_sh = np.sum(
                     temp_dom.loc[mask_s, self.x_var]
                 )  # Sum of x not in sample
                 xh = res[s][f"{self.x_var}_sum_sample"]  # Sum of x in sample
@@ -613,11 +594,11 @@ class StratifiedModel(BaseModel):
                 # Add in variance for stratum if var is not na or inf
                 if xh == 0:
                     xh = 1
-                    print(
-                        f"The expanatory variable (x_var) in domain, {d}, summed to zero. This has been adjusted to 1 for variance calculations"
-                    )
+                    mes_sum = f"The expanatory variable (x_var) in domain, {d}, summed to zero. This has been adjusted to 1 for variance calculations"
+                    self.logger.warning(mes_sum)
+
                 if (not np.isinf(s2)) & (not np.isnan(s2)):
-                    var += s2 * Uh_sh * ((Uh_sh + xh) / xh)
+                    var += s2 * uh_sh * ((uh_sh + xh) / xh)
 
             # Add calculations to domain dict
             domain_df[d] = {
@@ -652,8 +633,8 @@ class StratifiedModel(BaseModel):
             V = np.nan
 
         if V < 0:
-            if self.verbose == 2:
-                print("Negative variances calculated. These are being adjusted to 0.")
+            mes_adj = "Negative variances calculated. These are being adjusted to 0."
+            self.logger.warning(mes_adj)
             V = 0
 
         return V
@@ -676,9 +657,10 @@ class StratifiedModel(BaseModel):
             for strata_var, domains in domain_key.items()
             if len(set(domains)) > 1
         }
+        # This assert is handled in get_estimates
         assert (
             len(one_to_many) == 0
-        ), "1-to-many relationship(s) found in strata/domain aggregation. Only aggregated variances are programmed."
+        ), "1-to-many relationship(s) found in strata/domain aggregation."
 
         # map key
         strata_res = pd.DataFrame(self.strata_results).T
@@ -737,9 +719,9 @@ class StratifiedModel(BaseModel):
         is_rstud_present = "rstud" in next(iter(self.obs_data.values()))
 
         if not is_rstud_present:
-            raise RuntimeError(
-                "Model has not been fitted for calculating extreme values. Please re-run fit() with control_extremes = True"
-            )
+            mes_run = "Model has not been fitted for calculating extreme values. Please re-run fit() with control_extremes = True"
+            self.logger.error(mes_run)
+            raise RuntimeError(mes_run)
 
     def _get_robust(self, strata: str, ai_function: Any) -> tuple[float, float, float]:
         """Get robust variance estimations."""
@@ -763,10 +745,9 @@ class StratifiedModel(BaseModel):
 
             # Adjust negative variance to zero
             if any(x < 0 for x in [V1, V2, V3]):
-                if self.verbose == 2:
-                    print(
-                        "Negative variances calculated. These are being adjusted to 0."
-                    )
+                self.logger.warning(
+                    msg="Negative variances calculated. These are being adjusted to 0."
+                )
                 V1 = max(V1, 0)
                 V2 = max(V2, 0)
                 V3 = max(V3, 0)
