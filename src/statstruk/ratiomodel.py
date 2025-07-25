@@ -1,4 +1,4 @@
-# # Code for estimation using a ration model
+# # Code for estimation using a ratio model
 # #### To do:
 # - Adjust rerunning for excludes to only rerun specific strata.
 # - Add in option for several y values.
