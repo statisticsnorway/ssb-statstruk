@@ -96,7 +96,7 @@ extend-exclude = [
     "*/.ipynb_checkpoints/*",
     "noxfile.py",
     "docs/conf.py",
-    "src/run.py",
+    "src/run_testing.py",
     "src/regressionmodel.py",
     "tests/*",
 ]
