@@ -7,10 +7,6 @@ The package is on PyPI can be installed in a poetry environment by running the f
 ```bash
 poetry add ssb-statstruk
 ```
-or
-```bash
-pip install ssb-statstruk
-```
 
 ## Import module
 The module can then be imported into a python session/notebook. The main class used is called `RatioModel` and can be imported with:

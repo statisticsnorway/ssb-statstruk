@@ -156,7 +156,9 @@ def test_statstruk_ratiomodel_standard() -> None:
     mod1 = RatioModel(p_data, s_data, id_nr="id")
     mod1.fit(x_var="employees", y_var="job_vacancies", strata_var="industry")
     out = mod1.get_estimates(variance_type="standard")
-    assert np.isclose(np.round(out["job_vacancies_CV"].iloc[0], 4), 3.9762, rtol=1e-09, atol=1e-09)
+    assert np.isclose(
+        np.round(out["job_vacancies_CV"].iloc[0], 4), 3.9762, rtol=1e-09, atol=1e-09
+    )
 
 
 def test_statstruk_ratiomodel_nocontrol() -> None:
@@ -168,7 +170,9 @@ def test_statstruk_ratiomodel_nocontrol() -> None:
         control_extremes=False,
     )
     out = mod1.get_estimates(variance_type="standard")
-    assert np.isclose(np.round(out["job_vacancies_CV"].iloc[0], 4), 3.9762, rtol=1e-09, atol=1e-09)
+    assert np.isclose(
+        np.round(out["job_vacancies_CV"].iloc[0], 4), 3.9762, rtol=1e-09, atol=1e-09
+    )
     with pytest.raises(RuntimeError):
         mod1.get_extremes()
 
