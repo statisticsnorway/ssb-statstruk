@@ -82,6 +82,11 @@ class BaseModel:
 
     @property
     def logging_dict(self) -> dict[str, int]:
+        """Returns a dictionary mapping standard logging level names to their corresponding numeric values.
+
+        Returns:
+            dict[str, int]: A dictionary of logging level names and their numeric values.
+        """
         logging_dict = {
             "debug": 10,
             "info": 20,
@@ -93,6 +98,11 @@ class BaseModel:
 
     @property
     def get_logging_level(self) -> str:
+        """Retrieves the name of the current logging level set in the logger.
+
+        Returns:
+            str: The name of the current logging level, or a message if none is set.
+        """
         level_name: str | None = next(
             (k for k, v in self.logging_dict.items() if v == self.logger.level), None
         )

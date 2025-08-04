@@ -500,11 +500,12 @@ class StratifiedModel(BaseModel):
                 f"{self.y_var}_VAR",
             ]
             if self.method == "ratio":
-                selected_columns = (
-                    selected_columns[:3]
-                    + [f"{self.x_var}_sum_pop", f"{self.x_var}_sum_sample"]
-                    + selected_columns[3:]
-                )
+                selected_columns = [
+                    *selected_columns[:3],
+                    f"{self.x_var}_sum_pop",
+                    f"{self.x_var}_sum_sample",
+                    *selected_columns[3:],
+                ]
             result = strata_df[selected_columns].groupby(domain).sum()
         if variance_type == "robust":
             var1 = []
@@ -534,11 +535,12 @@ class StratifiedModel(BaseModel):
                 f"{self.y_var}_VAR3",
             ]
             if self.method == "ratio":
-                selected_columns = (
-                    selected_columns[:3]
-                    + [f"{self.x_var}_sum_pop", f"{self.x_var}_sum_sample"]
-                    + selected_columns[3:]
-                )
+                selected_columns = [
+                    *selected_columns[:3],
+                    f"{self.x_var}_sum_pop",
+                    f"{self.x_var}_sum_sample",
+                    *selected_columns[3:],
+                ]
             result = strata_df[selected_columns].groupby(domain).sum()
 
         return result

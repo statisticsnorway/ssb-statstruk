@@ -1,7 +1,10 @@
-# # Code for estimation using a regression model
+# # Draft code for estimation using a regression model - not completed
 
+# ruff: noqa
+# mypy: ignore-errors
 
 # Import libraries
+import re
 from typing import Any
 
 import numpy as np
@@ -32,7 +35,7 @@ class RegModel(StratifiedModel):
             exclude: List of ID numbers for observations to exclude.
             remove_missing: Whether to automatically remove units in the sample that are missing x or y values.
         """
-        # Extract x and y variables for checking 
+        # Extract x and y variables for checking
         y_var, x_var = self.extract_vars(model_formula)
 
         # Check variables
@@ -46,9 +49,7 @@ class RegModel(StratifiedModel):
         self._check_variable(y_var, self.sample_data, remove_missing=remove_missing)
         self.sample_data[y_var] = self._convert_var(y_var, self.sample_data)
 
-
-
-#### old below - needs changing ####
+        #### old below - needs changing ####
         # Fit model
         super()._fit(
             y_var=y_var,
@@ -61,12 +62,12 @@ class RegModel(StratifiedModel):
             method_function=self._ratio_method,
             ai_function=self._get_ai_ratio,
         )
-    
+
     @staticmethod
     def extract_vars(model_formula):
-        lhs, rhs = form.split('~')
-        x_vars = set(re.findall(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b', rhs))
-        return(lhs, x_vars)
+        lhs, rhs = model_formula.split("~")
+        x_vars = set(re.findall(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b", rhs))
+        return (lhs, x_vars)
 
     def _ratio_method(
         self,
