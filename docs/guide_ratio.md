@@ -1,21 +1,17 @@
-# Quick guide to running a rate model with **_statstruk_**
+# Quick guide to running a ratio model with **_statstruk_**
 
-The python package **_statstruk_** is designed to make running estimation models for business surveys easier with options for standard and robust variance estimation as well as outlier detection. This quick guide is written (mostly) for those at Statistics Norway and uses an example data set, hosted on their internal Dapla platform. This is a practical guide with examples; see [Theory for rate model estimations](https://statisticsnorway.github.io/ssb-statstruk/theory_rate.html) for the formulas used in the functions.
+The python package **_statstruk_** is designed to make running estimation models for business surveys easier with options for standard and robust variance estimation as well as outlier detection. This quick guide is written (mostly) for those at Statistics Norway and uses an example data set, hosted on their internal Dapla platform. This is a practical guide with examples; see [Theory for ratio model estimations](https://statisticsnorway.github.io/ssb-statstruk/theory_ratio.html) for the formulas used in the functions.
 
 ## Installation
 The package is on PyPI can be installed in a poetry environment by running the following in a terminal:
 ```bash
 poetry add ssb-statstruk
 ```
-or 
-```bash
-pip install ssb-statstruk
-```
 
 ## Import module
-The module can then be imported into a python session/notebook. The main class used is called `ratemodel` and can be imported with:
+The module can then be imported into a python session/notebook. The main class used is called `RatioModel` and can be imported with:
 ```python
-from statstruk import ratemodel
+from statstruk import RatioModel
 ```
 
 
@@ -46,12 +42,12 @@ sample_df = dp.read_pandas(f"{bucket}/{folder}/sample.parquet")
 ```
 
 ## Set up model
-The model can be initialize with the ddata by running the ´ratemodel()´ function. This takes the names of the two data frames and the identification variable found in them both.
+The model can be initialized with the data by running ´RatioModel()´. This takes the names of the two data frames and the identification variable found in them both.
 
 ```python
-mod = ratemodel(pop_df, sample_df, id_nr="id")
+mod = RatioModel(pop_df, sample_df, id_nr="id")
 ```
-This function initiates an instance of the `ratemodel` class and runs some initial checks. If you want extra output throughout the fitting and esitmation you can set the paramter ´verbose=2´ for more descriptive prints.
+This initiates an instance of the `RatioModel` class and runs some initial checks. If you want extra output throughout the fitting and esitmation you can set the paramter ´verbose=2´ for more descriptive prints.
 
 ## Fit model
 The model can now be fit using the `fit()` function. The name of the explanatory variable (`x_var`)  and target variable (`y_var`) need to be provided. If the model should be run within strata, the name of the variable(s) should be given as the `strata_var` parameter.
@@ -67,7 +63,7 @@ Estimates for the total values and their uncertainty within strata can be fetche
 ```python
 mod.get_estimates()
 ```
-This calculates (robust) variance estimations and the uncertainty for each stratum. Formulas used in the estimation calculations can be found in [Theory for rate model estimations](https://github.com/statisticsnorway/ssb-statstukrt/docs/theory_rate.md). The parameter `uncertainty_type` controls which uncertainty measures are returned. The coefficient of variation ("CV") is returned by default, however, standard errors ("SE"), variance ("VAR"), confidence intervals ("CI") or combinations of these can be specified. For example to get the estimates with their standard errors:
+This calculates (robust) variance estimations and the uncertainty for each stratum. Formulas used in the estimation calculations can be found in [Theory for ratio model estimations](https://github.com/statisticsnorway/ssb-statstukrt/docs/theory_ratio.md). The parameter `uncertainty_type` controls which uncertainty measures are returned. The coefficient of variation ("CV") is returned by default, however, standard errors ("SE"), variance ("VAR"), confidence intervals ("CI") or combinations of these can be specified. For example to get the estimates with their standard errors:
 
 ```python
 mod.get_estimates(uncertainty_type = "SE")

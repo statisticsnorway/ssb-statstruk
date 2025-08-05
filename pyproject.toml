@@ -44,6 +44,8 @@ typeguard = ">=2.13.3"
 xdoctest = { extras = ["colors"], version = ">=0.15.10" }
 myst-parser = { version = ">=0.16.1" }
 deptry = ">=0.23.0"
+jupytext = ">=1"
+ipykernel = "^6.30.0"
 
 [tool.poetry]
 classifiers = ["Development Status :: 3 - Alpha"]
@@ -94,7 +96,8 @@ extend-exclude = [
     "*/.ipynb_checkpoints/*",
     "noxfile.py",
     "docs/conf.py",
-    "src/run.py",
+    "src/run_testing.py",
+    "src/regressionmodel.py",
     "tests/*",
 ]
 

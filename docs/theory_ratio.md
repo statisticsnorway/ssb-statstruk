@@ -1,22 +1,22 @@
-# Theory for rate model estimations in **_statstruk_**
+# Theory for ratio model estimations in **_statstruk_**
 
 ## Introduction
 The **_statstruk_** package is based on standard statistical theory and that described in the Norwegian document: [Bruk av applikasjonen Struktur](https://www.ssb.no/a/publikasjoner/pdf/notat_200730/notat_200730.pdf). A summary of the theory used in programming **_statstruk_** is described here.
 
 The package can be used to calculate model-based estimates for totals ({math}`T`) of a target variable collected from sampled units ({math}`s`) in a population ({math}`U`)). Standard and robust estimates for the uncertainty (variance) of the estimates are also calculated in the package. The methods provided are common for business surveys at Statistics Norway.
 
-There are 3 common models used for estimating: rate, regression and homogenous models. Rate model estimation is describes here.
+There are 3 common models used for estimating: ratio, regression and homogenous models. Ratio model estimation is describes here.
 
-## Rate model estimation
-Estimates based on a rate model are based on the following model:
+## Ratio model estimation
+Estimates based on a ratio model are based on the following model:
 
 ```{math}
 y_{hi} = \beta_h x_{hi} + \epsilon_{hi}
 ```
 
-where {math}`y_{hi}` is the variable of interest for unit {math}`i` in stratum {math}`h`, {math}`\beta_h` is the rate for the stratum, {math}`x_{hi}` is the explanatory variable, and {math}`\epsilon_{hi}` is the residual.
+where {math}`y_{hi}` is the variable of interest for unit {math}`i` in stratum {math}`h`, {math}`\beta_h` is the ratio for the stratum, {math}`x_{hi}` is the explanatory variable, and {math}`\epsilon_{hi}` is the residual.
 
-The variance structure of the residuals for a rate model is:
+The variance structure of the residuals for a ratio model is:
 
 ```{math}
 Var(\epsilon_{hi}) = x_{hi}\sigma^2_h
@@ -41,7 +41,7 @@ where {math}`X_h` is the sum of the explanatory variable in stratum {math}`h` fo
 
 
 ### Standard variance estimation
-A standard estimation for the uncertainty of the total estimate ({math}`\hat{T_h}`), for a rate model, can be described as
+A standard estimation for the uncertainty of the total estimate ({math}`\hat{T_h}`), for a ratio model, can be described as
 
 ```{math}
 \hat{Var}(\hat{T}_h-T_h) = X_h^2 \frac{X_h-x_{s_h}}{X_h} \frac{\hat{\sigma}_h^2}{x_{s_h}}
@@ -68,7 +68,7 @@ CV(\hat{T_h}-T_h) = \frac{SE(\hat{T_h}-T_h)}{\hat{T_h}}
 ### Robust variance estimation
 The [Struktur application](https://www.ssb.no/a/publikasjoner/pdf/notat_200730/notat_200730.pdf) programmed in SAS also includes  robust variance estimation. Three of these are programmed in the **_statstruk_** package. These are summarized in this section.
 
-We define the robust variance estimate for a rate model in two parts:
+We define the robust variance estimate for a ratio model in two parts:
 
 ```{math}
 Var_{robust}(\hat{T}_h-T_h) &= Var(\sum_{i \notin s_h}\hat{y}_{hi}) + Var(\sum_{i \notin s_h}y_{hi}) \\
@@ -85,13 +85,13 @@ Var_{robust3} &: d_{hi} = \frac{e_{hi}^2}{(1-v_{hi})^2}
 ```
 
 
-where {math}`e_{hi}` is the residual of observation {math}`i` in the model in stratum {math}`h` and {math}`v_{hi}` is the {math}`i`th value of the diagonal from the hat matrix, defined for a rate model as
+where {math}`e_{hi}` is the residual of observation {math}`i` in the model in stratum {math}`h` and {math}`v_{hi}` is the {math}`i`th value of the diagonal from the hat matrix, defined for a ratio model as
 
 ```{math}
 v_h=W_h^{1/2}X_h(X_h^TW_hX_h)^{−1}X_h^TW_h^{1/2}
 ```
 
-where {math}`W_h` is the vector of weights which is {math}`1/X_h` for a rate model.
+where {math}`W_h` is the vector of weights which is {math}`1/X_h` for a ratio model.
 
 
 
@@ -147,7 +147,7 @@ where
 \hat{\sigma}_{h|i}^2 = \frac{1}{n_h-2}\sum_{j\ne i}\frac{(y_{hj}-\hat{\beta}_{h|i}x_{hj})^2}{x_{hj}}
 ```
 
-where {math}`\hat{\beta}_{h|i}` refers to the model estimate for the rate excluding observation {math}`i`.
+where {math}`\hat{\beta}_{h|i}` refers to the model estimate for the ratio excluding observation {math}`i`.
 Absolute values of the studentized residual values above a criteria are then classified as outliers. A general threshold criteria used in **_statstruk_** is  2 but can be adjusted.
 
 ### DFFITS
@@ -156,4 +156,4 @@ The difference of fits ({math}`G`) can be calculated from the studentized residu
 ```{math}
 G=t_{hi|i} \sqrt{\frac{v_{hi}}{1 - v_{hi}}}
 ```
-Absolute values of {math}`G` above a specified threshold are classified as outliers. The thresold value used for outlier values of {math}`G` in rate models is generally {math}`\lambda \sqrt{1/n_h}` where {math}`\lambda` is often set to 2 but can be adjusted.
+Absolute values of {math}`G` above a specified threshold are classified as outliers. The thresold value used for outlier values of {math}`G` in ratio models is generally {math}`\lambda \sqrt{1/n_h}` where {math}`\lambda` is often set to 2 but can be adjusted.
