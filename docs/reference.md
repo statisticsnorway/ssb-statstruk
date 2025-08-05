@@ -13,21 +13,37 @@ delete the .rst file afterwards.
 
 ```{eval-rst}
 statstruk package
-==================
+=================
 
 
-statstruk.ratemodel module
----------------------------
+statstruk.basemodel module
+--------------------------
 
-.. automodule:: statstruk.ratemodel
+.. automodule:: statstruk.basemodel
    :members:
    :undoc-members:
    :show-inheritance:
 
-statstruk.ssbmodel module
---------------------------
+statstruk.homogenmodel module
+-----------------------------
 
-.. automodule:: statstruk.ssbmodel
+.. automodule:: statstruk.homogenmodel
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+statstruk.ratiomodel module
+---------------------------
+
+.. automodule:: statstruk.ratiomodel
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+statstruk.stratifiedmodel module
+--------------------------------
+
+.. automodule:: statstruk.stratifiedmodel
    :members:
    :undoc-members:
    :show-inheritance:

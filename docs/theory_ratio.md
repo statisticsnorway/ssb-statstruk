@@ -1,11 +1,11 @@
 # Theory for ratio model estimations in **_statstruk_**
 
 ## Introduction
-The **_statstruk_** package is based on standard statistical theory and that described in the Norwegian document: [Bruk av applikasjonen Struktur](https://www.ssb.no/a/publikasjoner/pdf/notat_200730/notat_200730.pdf). A summary of the theory used in programming **_statstruk_** is described here.
+The **_statstruk_** package is based on standard statistical theory and that described in the Norwegian document: [Bruk av applikasjonen Struktur](https://www.ssb.no/a/publikasjoner/pdf/notat_200730/notat_200730.pdf). A summary of the theory used in programming **_statstruk_** for ratio models is described here.
 
-The package can be used to calculate model-based estimates for totals ({math}`T`) of a target variable collected from sampled units ({math}`s`) in a population ({math}`U`)). Standard and robust estimates for the uncertainty (variance) of the estimates are also calculated in the package. The methods provided are common for business surveys at Statistics Norway.
+The package can be used to calculate model-based estimates for totals ({math}`T`) of a target variable collected from sampled units ({math}`s`) in a population ({math}`U`). Standard and robust estimates for the uncertainty (variance) of the estimates are also calculated in the package. The methods provided are common for business surveys at Statistics Norway.
 
-There are 3 common models used for estimating: ratio, regression and homogenous models. Ratio model estimation is describes here.
+There are 3 common models used for estimating: ratio, regression and homogenous models. Ratio model estimation is described here.
 
 ## Ratio model estimation
 Estimates based on a ratio model are based on the following model:
@@ -111,10 +111,10 @@ Similarly the variance can also be summed to calculate the uncertainty of the do
 If the domains are not aggregations of several strata, we need to adjust the estimates for the total and uncertainty to account for this. The estimate of the total ({math}`T_{hd}`) for domain, {math}`d`, in stratum, {math}`h`, is
 
 ```{math}
-\hat{T}_{hd} = X_{hd}\hat{\beta}_h
+\hat{T}_{hd} = X_{hd|s_h}\hat{\beta}_h+y_{s_{hd}}
 ```
 
-and a total for the domain ({math}`\hat{T}_d`) as
+where {math}`X_{hd|s_h}` is the sum of the explanatory variable in the population for strata {math}`h`, and domain {math}`d`, excluding the {math}`x` values in the sample for that domain and stratum, and {math}`y_{s_{hd}}` is the sum of the variable of interest in the sample for strata {math}`h` and domain {math}`d`. The total for the domain ({math}`\hat{T}_d`) is then
 
 ```{math}
 \hat{T}_{d} = \sum_h \hat{T}_{hd}
@@ -126,7 +126,7 @@ A standard variance for the domain estimate can be calculated by first the varia
 \hat{Var}(\hat{T}_{hd} - T_{hd}) =  X_{hd|s_h}^2\frac{X_{hd|s_h} + x_{s_h}}{X_{hd|s_h}} \frac{\hat{\sigma}_h^2}{x_{s_h}}
 ```
 
-where {math}`X_{hd|s_h}` is the sum of the explanatory variable in the population for strata {math}`h`, and domain {math}`d`, excluding the {math}`x` values in the sample for that domain and stratum. The total for the domain is the sum over the strata as
+The total for the domain is the sum over the strata is then
 
 ```{math}
 \hat{Var}(\hat{T}_{d} - T_{d}) = \sum_h \hat{Var}(\hat{T}_{hd} - T_{hd})
@@ -139,7 +139,7 @@ Estimation based on models can be strongly influenced by outliers that have a st
 The studentized residuals ({math}`t_{hi|i}`) are calculated using an estimate for {math}`\sigma_h` based on a fitted model without observation, {math}`i`, and is sometimes referred to as the external studentized residuals. The studentized residuals are calculated as
 
 ```{math}
-t_{hi|i} = \frac{y_{hi} - \hat{\beta_h}x_{hi}}{\sqrt{\hat{\sigma}_{h|i}^2x_{hi}}\sqrt{1-hat_{hi}}}
+t_{hi|i} = \frac{y_{hi} - \hat{\beta_h}x_{hi}}{\sqrt{\hat{\sigma}_{h|i}^2x_{hi}}\sqrt{1-v_{hi}}}
 ```
 where
 
@@ -156,4 +156,4 @@ The difference of fits ({math}`G`) can be calculated from the studentized residu
 ```{math}
 G=t_{hi|i} \sqrt{\frac{v_{hi}}{1 - v_{hi}}}
 ```
-Absolute values of {math}`G` above a specified threshold are classified as outliers. The thresold value used for outlier values of {math}`G` in ratio models is generally {math}`\lambda \sqrt{1/n_h}` where {math}`\lambda` is often set to 2 but can be adjusted.
+Absolute values of {math}`G` above a specified threshold are classified as outliers. The threshold value used for outlier values of {math}`G` in ratio models is generally {math}`\lambda \sqrt{1/n_h}` where {math}`\lambda` is often set to 2 but can be adjusted.
