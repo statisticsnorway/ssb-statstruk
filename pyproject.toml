@@ -1,6 +1,6 @@
 [project]
 name = "ssb-statstruk"
-version = "0.0.9"
+version = "0.0.10"
 description = "SSB Statstruk"
 authors = [{ name = "Susie Jentoft", email = "coo@ssb.no" }]
 license = "MIT"
