@@ -650,8 +650,8 @@ class StratifiedModel(BaseModel):
         aggregated = pop.groupby(strata_var)[domain].agg(list)
 
         domain_key = aggregated.to_dict()
-        for strata_var, domain_value in domain_key.items():
-            domain_key[strata_var] = list(set(domain_value))
+        for key, domain_value in domain_key.items():
+            domain_key[key] = list(set(domain_value))
 
         # check for 1 to many and return error
         one_to_many = {
