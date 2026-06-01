@@ -21,9 +21,6 @@ repository = "https://github.com/statisticsnorway/ssb-statstruk"
 documentation = "https://statisticsnorway.github.io/ssb-statstruk"
 Changelog = "https://github.com/statisticsnorway/ssb-statstruk/releases"
 
-[tool.poetry.dependencies]
-python = ">=3.10,<4"
-click = ">=8.0.1"
 
 [dependency-groups]
 lint = [
