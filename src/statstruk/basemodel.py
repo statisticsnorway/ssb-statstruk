@@ -23,8 +23,8 @@ class BaseModel:
             verbose: Whether to show printed output or not. 1 is minimal output, 2 is more output. This is for back compatibility only. Use logger_level instead.
             logger_level: Level of logging, Choose between "debug", "info", "warning","error", or "critical".
         """
-        self.pop_data = pop_data
-        self.sample_data = sample_data
+        self.pop_data = pop_data.copy()
+        self.sample_data = sample_data.copy()
 
         # Start logging
         self.logger = logging.getLogger("model")
