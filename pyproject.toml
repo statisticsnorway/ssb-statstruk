@@ -61,7 +61,7 @@ packages = [{ include = "statstruk", from = "src" }]
 poetry-plugin-export = ">=1.9"
 
 [tool.poetry.scripts]
-ssb-statstrukt = "statstrukt.__main__:main"
+ssb-statstruk = "statstruk.__main__:main"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
