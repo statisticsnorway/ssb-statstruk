@@ -167,8 +167,8 @@ jobs:
       # Replace root path with /github/workspace (mounted in docker container).
       - name: Override coverage source paths for SonarCloud
         run: |
-          sed -i "s/<source><\/source>/<source>\/home\/runner\/work\/ssb-statstrukt\/ssb-statstrukt<\/source>/g" coverage.xml
-          sed -i "s/<source>tests/<source>\/home\/runner\/work\/ssb-statstrukt\/ssb-statstrukt\/tests/g" coverage.xml
+          sed -i "s/<source><\/source>/<source>\/home\/runner\/work\/ssb-statstruk\/ssb-statstruk<\/source>/g" coverage.xml
+          sed -i "s/<source>tests/<source>\/home\/runner\/work\/ssb-statstruk\/ssb-statstruk\/tests/g" coverage.xml
 
       - name: SonarQube Cloud Scan
         env:

@@ -4,9 +4,9 @@
   "checkout": null,
   "context": {
     "cookiecutter": {
-      "project_name": "ssb-statstrukt",
-      "package_name": "statstrukt",
-      "friendly_name": "SSB Statstrukt",
+      "project_name": "ssb-statstruk",
+      "package_name": "statstruk",
+      "friendly_name": "SSB Statstruk",
       "copyright_owner": "Statistics Norway",
       "copyright_year": "2024",
       "author": "Susie Jentoft",
